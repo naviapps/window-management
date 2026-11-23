@@ -1693,10 +1693,10 @@
   "toolInputs": {
     "artifacts.py": "1754138ef1807e593e1d228d678cb396398435c6ff69c1d96fadc80fe443747e",
     "c_compiler.py": "3005695b914b6e416c7eddd1f31d3ee37a633f4176ea7a131b59935d8ad95594",
-    "cargo.py": "ad44c7666dfcff89d35c7008ccada6910a6ea6f299a9f955e917f841a563a597",
-    "cargo_build.py": "0aee57b901cbfc9ed8bebff51725f9a71d242f904e184b1c9965965741dabba4",
+    "cargo.py": "4f468ebfd98d094b464bbb4ac354b65726a1b099f8cfd50c9c37a3fc495c8544",
+    "cargo_build.py": "96a1a5b00a20fd64d8691eeba89839144e7e5bd8fd989e9cb0a4a80152f98590",
     "crates/rustc-dep-info/src/main.rs": "0a59fb162cc855001899ad9b83875fac0ed837e73caafd116453352c9b56e2cf",
-    "ffi.py": "4e3f22f317710575236e124899b4dcadf6ddc1eed8482294a8a5874314d010ce",
+    "ffi.py": "d69e16a62490c95c7a2935e93ac6d557de2fbf6c66afde7aace3099a3f0ed03f",
     "native_plan.py": "126791c1993dded2be0f46784a28528d40ed1218c46d1f1aadb2c026f047dcd3",
     "xcframework.py": "277c2e390f94f45614479e289deccea9c2c3e0af71d5c6ce5421872161671558"
   }
