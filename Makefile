@@ -9,7 +9,7 @@ check: check-source test test-consumer
 
 check-source: lint test-rust test-managed
 
-check-distribution: native-verify build-release test-docs test-distribution-fixtures
+check-distribution: native-verify build-release test-docs test-distribution-fixtures test-installed-consumers test-c test-dotnet
 
 build:
 	swift build $(SWIFT_STRICT_FLAGS)

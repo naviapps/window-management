@@ -4,13 +4,13 @@ import WindowManagement
 struct WindowListSnapshotMapper: Sendable {
   private let ownerBundleIdentifierProvider: any WindowOwnerBundleIdentifierProviding
   private let filter: WindowSnapshotFilter
-  private let windowLayers: Set<Int>
+  private let windowLayers: Set<CGWindowLevel>
 
   init(
     ownerBundleIdentifierProvider: any WindowOwnerBundleIdentifierProviding =
       NSRunningApplicationBundleIdentifierProvider(),
     filter: WindowSnapshotFilter = .init(),
-    windowLayers: Set<Int> = [0]
+    windowLayers: Set<CGWindowLevel> = [0]
   ) {
     self.ownerBundleIdentifierProvider = ownerBundleIdentifierProvider
     self.filter = filter

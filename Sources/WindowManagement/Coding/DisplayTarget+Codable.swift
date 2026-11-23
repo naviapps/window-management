@@ -4,18 +4,31 @@ import Foundation
 extension DisplayTarget: Codable {
   /// Decode using platform-independent native identifier widths and shared normalization.
   public init(from decoder: Decoder) throws {
-    try self.init(canonicalFields: WindowJSON.read(from: decoder, kind: 1))
+    self = try WindowJSON.project(from: decoder) {
+      try JSONDecoder().decode(Canonical.self, from: WindowJSON.normalize($0, kind: 1)).value
+    }
   }
 
-  init(canonicalFields v: [String: WindowWireValue]) throws {
-    switch try v.field("kind", as: String.self) {
-    case "main": self = .main
-    case "containing-window": self = .containingWindow
-    case "point":
-      self = try .point(.init(x: v.field("x", as: CGFloat.self), y: v.field("y", as: CGFloat.self)))
-    case "display-identifier": self = try .displayIdentifier(v.field("displayIdentifier"))
-    case "ordered-index": self = try .orderedIndex(v.field("orderedIndex"))
-    default: throw WindowRequestCodecError.invalidData("Unsupported canonical display target.")
+  struct Canonical: Decodable {
+    private enum Field: String, CodingKey {
+      case kind, x, y, displayIdentifier, orderedIndex
+    }
+
+    let value: DisplayTarget
+
+    init(from decoder: any Decoder) throws {
+      let v = try decoder.container(keyedBy: Field.self)
+      switch try v.decode(String.self, forKey: .kind) {
+      case "main": value = .main
+      case "containing-window": value = .containingWindow
+      case "point":
+        value = try .point(
+          .init(x: v.decode(CGFloat.self, forKey: .x), y: v.decode(CGFloat.self, forKey: .y)))
+      case "display-identifier":
+        value = try .displayIdentifier(v.decode(UInt64.self, forKey: .displayIdentifier))
+      case "ordered-index": value = try .orderedIndex(v.decode(Int.self, forKey: .orderedIndex))
+      default: throw WindowRequestCodecError.invalidData("Unsupported canonical display target.")
+      }
     }
   }
   /// Encode a display target using the shared tagged shape.

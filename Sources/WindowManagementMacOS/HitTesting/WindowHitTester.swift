@@ -35,7 +35,7 @@ public struct WindowHitTester: WindowHitTesting, Sendable {
       listProvider: SystemWindowListProvider(),
       pointTransform: pointTransform,
       filter: filter,
-      windowLayers: Set(windowLevels.map { Int($0) })
+      windowLayers: windowLevels
     )
   }
 
@@ -46,7 +46,7 @@ public struct WindowHitTester: WindowHitTesting, Sendable {
     ownerBundleIdentifierProvider: any WindowOwnerBundleIdentifierProviding =
       NSRunningApplicationBundleIdentifierProvider(),
     filter: WindowSnapshotFilter = .init(),
-    windowLayers: Set<Int> = [0]
+    windowLayers: Set<CGWindowLevel> = [0]
   ) {
     self.request = request
     self.listProvider = listProvider

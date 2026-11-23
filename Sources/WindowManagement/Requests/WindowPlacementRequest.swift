@@ -16,10 +16,18 @@ public struct WindowPlacementRequest: Equatable, Hashable, Sendable {
     placement: WindowPlacement, display: DisplayTarget = .containingWindow,
     area: DisplayArea = .visible, inset: CGFloat = 0
   ) {
-    self.placement = placement.normalized
-    self.display = display.normalized
+    self.init(
+      normalizedPlacement: placement.normalized, display: display.normalized, area: area,
+      inset: window_management_inset_normalize(inset))
+  }
+
+  init(
+    normalizedPlacement: WindowPlacement, display: DisplayTarget, area: DisplayArea, inset: CGFloat
+  ) {
+    placement = normalizedPlacement
+    self.display = display
     self.area = area
-    self.inset = window_management_inset_normalize(inset)
+    self.inset = inset
   }
 
   var nativeValue: WindowManagementPlacementRequest {

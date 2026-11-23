@@ -138,7 +138,7 @@ struct WindowOwnerBundleIdentifierProvidingStub: WindowOwnerBundleIdentifierProv
 }
 
 func makeWindowEntry(
-  layer: Int,
+  layer: CGWindowLevel,
   frame: CGRect,
   ownerProcessIdentifier: Int32?,
   windowIdentifier: UInt32? = 12345

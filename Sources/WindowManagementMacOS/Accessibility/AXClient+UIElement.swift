@@ -28,13 +28,12 @@ extension AXClient {
 
   func attributeUInt32(_ attribute: AXWindowAttribute, of element: AXUIElement) throws -> UInt32? {
     guard let value = try optionalAttributeValue(attribute, of: element) else { return nil }
-    guard CFGetTypeID(value) == CFNumberGetTypeID() else {
+    guard CFGetTypeID(value) == CFNumberGetTypeID(),
+      let identifier = value as? UInt32
+    else {
       throw AXWindowError.invalidAXValue
     }
-    guard let number = value as? NSNumber else {
-      throw AXWindowError.invalidAXValue
-    }
-    return try exactUInt32(number)
+    return identifier
   }
 
   func attributeString(_ attribute: AXWindowAttribute, of element: AXUIElement) throws -> String? {
@@ -131,21 +130,6 @@ extension AXClient {
     Unmanaged<Value>
       .fromOpaque(Unmanaged.passUnretained(value).toOpaque())
       .takeUnretainedValue()
-  }
-
-  private func exactUInt32(_ number: NSNumber) throws -> UInt32 {
-    guard
-      number.compare(NSNumber(value: UInt32.min)) != .orderedAscending,
-      number.compare(NSNumber(value: UInt32.max)) != .orderedDescending
-    else {
-      throw AXWindowError.invalidAXValue
-    }
-
-    let value = number.uint32Value
-    guard NSNumber(value: value).compare(number) == .orderedSame else {
-      throw AXWindowError.invalidAXValue
-    }
-    return value
   }
 
   private func optionalAttributeValue(_ attribute: AXWindowAttribute, of element: AXUIElement)

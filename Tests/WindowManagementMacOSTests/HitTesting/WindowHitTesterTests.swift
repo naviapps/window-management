@@ -31,7 +31,7 @@ final class WindowHitTesterTests: XCTestCase {
       listProvider: provider, ownerBundleIdentifierProvider: bundleProvider)
     let floatingTester = WindowHitTester(
       listProvider: provider, ownerBundleIdentifierProvider: bundleProvider,
-      windowLayers: [Int(normalLevel), Int(floatingLevel)])
+      windowLayers: [normalLevel, floatingLevel])
     let point = CGPoint(x: 10, y: 10)
 
     XCTAssertEqual(defaultTester.hitTest(at: point).snapshot?.windowIdentifier, 44)

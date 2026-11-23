@@ -3,15 +3,18 @@ import Foundation
 extension WindowPlacementRequest: Codable {
   /// Decode the Rust-normalized request, including its storage defaults.
   public init(from decoder: Decoder) throws {
-    try self.init(canonicalFields: WindowJSON.read(from: decoder, kind: 2))
+    self = try WindowJSON.project(from: decoder, WindowRequestCodec.decodePlacement)
   }
 
-  init(canonicalFields v: [String: WindowWireValue]) throws {
-    self.init(
-      placement: try WindowPlacement(canonicalFields: v.objectField("placement")),
-      display: try DisplayTarget(canonicalFields: v.objectField("screen")),
-      area: try v.field("area"),
-      inset: try v.field("inset"))
+  struct Canonical: Decodable {
+    private let placement: WindowPlacement.Canonical
+    private let screen: DisplayTarget.Canonical
+    private let area: DisplayArea
+    private let inset: CGFloat
+
+    var value: WindowPlacementRequest {
+      .init(normalizedPlacement: placement.value, display: screen.value, area: area, inset: inset)
+    }
   }
   /// Encode the shared request contract.
   public func encode(to encoder: Encoder) throws {
@@ -21,13 +24,16 @@ extension WindowPlacementRequest: Codable {
 extension WindowMoveRequest: Codable {
   /// Decode the shared movement contract and relative-position default.
   public init(from decoder: Decoder) throws {
-    try self.init(canonicalFields: WindowJSON.read(from: decoder, kind: 3))
+    self = try WindowJSON.project(from: decoder, WindowRequestCodec.decodeMovement)
   }
 
-  init(canonicalFields v: [String: WindowWireValue]) throws {
-    self.init(
-      direction: try v.field("direction"),
-      preservesRelativePosition: try v.field("preservesRelativePosition"))
+  struct Canonical: Decodable {
+    private let direction: DisplayCycleDirection
+    private let preservesRelativePosition: Bool
+
+    var value: WindowMoveRequest {
+      .init(direction: direction, preservesRelativePosition: preservesRelativePosition)
+    }
   }
   /// Encode the shared movement contract.
   public func encode(to encoder: Encoder) throws {

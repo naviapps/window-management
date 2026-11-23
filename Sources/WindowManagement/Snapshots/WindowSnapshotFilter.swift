@@ -80,15 +80,7 @@ public struct WindowSnapshotFilter: Hashable, Sendable, Codable {
 
   /// Decodes with Rust defaults and validation. Use `init(jsonData:)` to detect duplicate JSON keys.
   public init(from decoder: any Decoder) throws {
-    let wire = try WindowWireValue(from: decoder)
-    do {
-      try self.init(jsonData: JSONEncoder().encode(wire))
-    } catch let error as WindowRequestCodecError {
-      throw DecodingError.dataCorrupted(
-        .init(
-          codingPath: decoder.codingPath, debugDescription: error.localizedDescription,
-          underlyingError: error))
-    }
+    self = try WindowJSON.project(from: decoder) { try Self(jsonData: $0) }
   }
 
   public func encode(to encoder: any Encoder) throws {

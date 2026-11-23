@@ -233,7 +233,7 @@ Use `mise exec -- make <target>` so pinned tools remain available in temporary c
 | Target                     | SDK coverage                                                                            |
 | -------------------------- | --------------------------------------------------------------------------------------- |
 | `check`                    | Lint, Rust tests and Clippy, strict Swift tests, Swift consumer and managed compilation |
-| `check-distribution`       | Framework receipts, Swift release build, DocC and distribution tool tests               |
+| `check-distribution`       | Framework, Swift release build, DocC, distribution fixtures and installed clients       |
 | `test-rust`                | Clippy and workspace tests with `--locked --offline`                                    |
 | `test-docs`                | Both catalogs against public symbol graphs, warnings as errors                          |
 | `test-consumer`            | Both Swift products installed with synthetic providers                                  |
@@ -251,8 +251,8 @@ results, raw-byte and Codable projection, native ownership and the public entry 
 ### Distribution verification
 
 The [distribution plan](sdk-distribution.toml) selects this SDK's macOS and Windows
-x64 checks. Local distribution checks use the public SDK Tooling CLI pinned in
-[mise.toml](mise.toml):
+x64 checks. From a clean, committed checkout on macOS, run the checks with the
+public SDK Tooling CLI pinned in [mise.toml](mise.toml):
 
 ```sh
 mise exec -- make check-distribution

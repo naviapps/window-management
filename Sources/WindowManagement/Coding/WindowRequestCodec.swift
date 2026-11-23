@@ -17,12 +17,15 @@ public enum WindowRequestCodecError: LocalizedError, Equatable, Hashable, Sendab
 public enum WindowRequestCodec {
   /// Decode a placement request with canonical display, area and inset defaults.
   public static func decodePlacement(_ data: Data) throws -> WindowPlacementRequest {
-    try WindowPlacementRequest(
-      canonicalFields: WindowJSON.fields(WindowJSON.normalize(data, kind: 2)))
+    try JSONDecoder().decode(
+      WindowPlacementRequest.Canonical.self, from: WindowJSON.normalize(data, kind: 2)
+    ).value
   }
   /// Decode an adjacent-display movement request.
   public static func decodeMovement(_ data: Data) throws -> WindowMoveRequest {
-    try WindowMoveRequest(canonicalFields: WindowJSON.fields(WindowJSON.normalize(data, kind: 3)))
+    try JSONDecoder().decode(
+      WindowMoveRequest.Canonical.self, from: WindowJSON.normalize(data, kind: 3)
+    ).value
   }
   /// Encode a normalized placement request.
   public static func encode(_ request: WindowPlacementRequest) throws -> Data {
@@ -60,10 +63,12 @@ enum WindowJSON {
     }
     return result
   }
-  static func read(from decoder: Decoder, kind: UInt32) throws -> [String: WindowWireValue] {
+  static func project<Value>(
+    from decoder: any Decoder, _ decode: (Data) throws -> Value
+  ) throws -> Value {
     let raw = try WindowWireValue(from: decoder)
     do {
-      return try fields(normalize(JSONEncoder().encode(raw), kind: kind))
+      return try decode(JSONEncoder().encode(raw))
     } catch let error as WindowRequestCodecError {
       throw DecodingError.dataCorrupted(
         .init(
@@ -71,16 +76,13 @@ enum WindowJSON {
           underlyingError: error))
     }
   }
-  static func fields(_ canonical: Data) throws -> [String: WindowWireValue] {
-    try JSONDecoder().decode(WindowWireValue.self, from: canonical).objectFields()
-  }
   static func write(_ canonical: Data, to encoder: Encoder) throws {
     try JSONDecoder().decode(WindowWireValue.self, from: canonical).encode(to: encoder)
   }
 }
 
 /// A private Codable projection, without window policy or validation rules.
-indirect enum WindowWireValue: Codable {
+private indirect enum WindowWireValue: Codable {
   case object([String: Self])
   case array([Self])
   case string(String)
@@ -125,25 +127,5 @@ indirect enum WindowWireValue: Codable {
     case .bool(let v): try c.encode(v)
     case .null: try c.encodeNil()
     }
-  }
-  func objectFields() throws -> [String: Self] {
-    guard case .object(let fields) = self else {
-      throw WindowRequestCodecError.invalidData("Expected a window object.")
-    }
-    return fields
-  }
-}
-extension Dictionary where Key == String, Value == WindowWireValue {
-  func objectField(_ name: String) throws -> [String: WindowWireValue] {
-    guard let value = self[name] else {
-      throw WindowRequestCodecError.invalidData("Missing canonical field: \(name)")
-    }
-    return try value.objectFields()
-  }
-  func field<T: Decodable>(_ name: String, as _: T.Type = T.self) throws -> T {
-    guard let value = self[name] else {
-      throw WindowRequestCodecError.invalidData("Missing canonical field: \(name)")
-    }
-    return try JSONDecoder().decode(T.self, from: JSONEncoder().encode(value))
   }
 }

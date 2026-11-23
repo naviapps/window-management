@@ -23,9 +23,7 @@ internal static class WindowJson
         catch (EncoderFallbackException) { throw new WindowDataException("Window data contains invalid Unicode."); }
     }
 
-    internal static string Normalize(uint kind, string json) => Normalize(kind, EncodeUtf8(json));
     internal static string Normalize(uint kind, ReadOnlySpan<byte> json) => Encoding.UTF8.GetString(Native.ValueJson(kind, json));
-    internal static JsonElement Element(string json) { using var d = JsonDocument.Parse(json); return d.RootElement.Clone(); }
 }
 
 /// <summary>Reusable placement normalized in Rust. The factories do not query or control windows.</summary>
@@ -50,15 +48,18 @@ public sealed class WindowPlacement
     /// <summary>Strictly parse and normalize tagged placement JSON.</summary>
     public static WindowPlacement FromJson(string json)
     {
-        var v = WindowJson.Element(WindowJson.Normalize(0, json));
-        return v.GetProperty("kind").GetString() switch
+        using var document = JsonDocument.Parse(Native.ValueJson(0, WindowJson.EncodeUtf8(json)));
+        return FromCanonical(document.RootElement);
+    }
+
+    internal static WindowPlacement FromCanonical(JsonElement value) =>
+        value.GetProperty("kind").GetString() switch
         {
             "fill" => Fill,
-            "grid" => Grid(v.GetProperty("columns").GetInt64(), v.GetProperty("rows").GetInt64(), v.GetProperty("column").GetInt64(), v.GetProperty("row").GetInt64(), v.GetProperty("columnSpan").GetInt64(), v.GetProperty("rowSpan").GetInt64()),
-            "centered" => Centered(v.GetProperty("widthRatio").GetDouble(), v.GetProperty("heightRatio").GetDouble()),
+            "grid" => Grid(value.GetProperty("columns").GetInt64(), value.GetProperty("rows").GetInt64(), value.GetProperty("column").GetInt64(), value.GetProperty("row").GetInt64(), value.GetProperty("columnSpan").GetInt64(), value.GetProperty("rowSpan").GetInt64()),
+            "centered" => Centered(value.GetProperty("widthRatio").GetDouble(), value.GetProperty("heightRatio").GetDouble()),
             _ => throw new WindowDataException("Unsupported canonical placement."),
         };
-    }
 }
 
 /// <summary>Platform-native display selection. Identifiers belong to their native platform. Stored requests are normalized in Rust.</summary>
@@ -95,17 +96,20 @@ public sealed class DisplayTarget
     /// <summary>Strictly parse and normalize tagged selection JSON.</summary>
     public static DisplayTarget FromJson(string json)
     {
-        var v = WindowJson.Element(WindowJson.Normalize(1, json));
-        return v.GetProperty("kind").GetString() switch
+        using var document = JsonDocument.Parse(Native.ValueJson(1, WindowJson.EncodeUtf8(json)));
+        return FromCanonical(document.RootElement);
+    }
+
+    internal static DisplayTarget FromCanonical(JsonElement value) =>
+        value.GetProperty("kind").GetString() switch
         {
             "main" => Main,
             "containing-window" => ContainingWindow,
-            "point" => Point(v.GetProperty("x").GetDouble(), v.GetProperty("y").GetDouble()),
-            "display-identifier" => DisplayIdentifier(v.GetProperty("displayIdentifier").GetUInt64()),
-            "ordered-index" => OrderedIndex(v.GetProperty("orderedIndex").GetInt64()),
+            "point" => Point(value.GetProperty("x").GetDouble(), value.GetProperty("y").GetDouble()),
+            "display-identifier" => DisplayIdentifier(value.GetProperty("displayIdentifier").GetUInt64()),
+            "ordered-index" => OrderedIndex(value.GetProperty("orderedIndex").GetInt64()),
             _ => throw new WindowDataException("Unsupported canonical display target."),
         };
-    }
 }
 
 /// <summary>Display area used by placement.</summary>
@@ -157,9 +161,10 @@ public sealed class WindowPlacementRequest
     public static WindowPlacementRequest FromJsonUtf8(ReadOnlySpan<byte> json)
     {
         var canonical = WindowJson.Normalize(2, json);
-        var v = WindowJson.Element(canonical);
-        return new(WindowPlacement.FromJson(v.GetProperty("placement").GetRawText()), DisplayTarget.FromJson(v.GetProperty("screen").GetRawText()),
-            v.GetProperty("area").GetString() == "full" ? DisplayArea.Full : DisplayArea.Visible, v.GetProperty("inset").GetDouble(), canonical);
+        using var document = JsonDocument.Parse(canonical);
+        var value = document.RootElement;
+        return new(WindowPlacement.FromCanonical(value.GetProperty("placement")), DisplayTarget.FromCanonical(value.GetProperty("screen")),
+            value.GetProperty("area").GetString() == "full" ? DisplayArea.Full : DisplayArea.Visible, value.GetProperty("inset").GetDouble(), canonical);
     }
 }
 
@@ -189,7 +194,8 @@ public sealed class WindowMoveRequest
     public static WindowMoveRequest FromJsonUtf8(ReadOnlySpan<byte> json)
     {
         var canonical = WindowJson.Normalize(3, json);
-        var v = WindowJson.Element(canonical);
-        return new(v.GetProperty("direction").GetString() == "next" ? DisplayCycleDirection.Next : DisplayCycleDirection.Previous, v.GetProperty("preservesRelativePosition").GetBoolean(), canonical);
+        using var document = JsonDocument.Parse(canonical);
+        var value = document.RootElement;
+        return new(value.GetProperty("direction").GetString() == "next" ? DisplayCycleDirection.Next : DisplayCycleDirection.Previous, value.GetProperty("preservesRelativePosition").GetBoolean(), canonical);
     }
 }
