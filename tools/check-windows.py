@@ -63,19 +63,12 @@ def main(root=None, argv=None):
     library = destination / (native.library + ".dll")
     with load("artifacts").build_lock(root / ".native-build"):
         windows.verify_artifact(native, architecture="x64", environment=env)
-        run([sys.executable, root / "tools/test-c.py", "--library", library])
+        command = load("binding_checks").command
+        run(command("c", "--library", library))
         sources = [
             value for source in args.package_source for value in ("--package-source", source)
         ]
-        run(
-            [
-                sys.executable,
-                root / "tools/test-dotnet.py",
-                "--native-root",
-                destination,
-                *sources,
-            ]
-        )
+        run(command("dotnet", "--native-root", destination, *sources))
         if args.desktop:
             run_desktop(root, dotnet, env, library, args.package_source, run)
     if inputs != support_inputs():

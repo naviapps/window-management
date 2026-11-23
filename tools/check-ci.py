@@ -61,7 +61,7 @@ def main(root=None, argv=None):
             or receipt["sha256"] != hashlib.sha256(package.read_bytes()).hexdigest()
         ):
             raise ValueError("Windows package differs from the accepted x64 build")
-        run([sys.executable, "tools/test-package.py", package])
+        run(load("binding_checks").command("nuget", package))
         if inputs != support_inputs():
             raise ValueError("Build support changed during Windows x64 acceptance")
         if (

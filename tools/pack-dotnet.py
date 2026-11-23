@@ -38,7 +38,7 @@ def main(argv=None):
         input_files=[
             Path(__file__),
             root / "tools/_tooling.py",
-            root / "tools/tooling-sources.json",
+            root / "mise.toml",
         ],
         argv=[value for rid in args.runtime for value in ("--runtime", rid)]
         + [value for source in args.package_source for value in ("--package-source", source)],

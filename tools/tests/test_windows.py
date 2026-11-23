@@ -30,11 +30,6 @@ class WindowsToolsTests(unittest.TestCase):
         self.assertEqual(rejected.exception.code, 2)
         builder.assert_not_called()
 
-    def test_windows_consumer_passes_x64_to_the_driver(self):
-        with patch.object(sys, "platform", "win32"):
-            result = windows.consumer_options(["package.nupkg"])
-        self.assertEqual(result, ["package.nupkg", "--windows-architecture", "x64"])
-
     def test_windows_build_selects_native_tools_for_the_x64_target(self):
         for host in ("x64", "arm64"):
             with (
@@ -89,9 +84,10 @@ class WindowsToolsTests(unittest.TestCase):
                 native = root / ".native-build/windows/win-x64/native-build.json"
                 package = root / ".native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg"
                 seen = []
+                sdk = str(root / "tooling/tasks/sdk")
 
                 def run(command, **_options):
-                    seen.append(command[1])
+                    seen.append(command[1:])
                     if command[1] == "tools/check-windows.py":
                         self.assertEqual(command[2:], ["--desktop"] if desktop else [])
                         native.parent.mkdir(parents=True)
@@ -111,18 +107,37 @@ class WindowsToolsTests(unittest.TestCase):
                                 }
                             )
                         )
-                    elif changed == "package":
-                        package.write_bytes(b"changed after acceptance")
+                    else:
+                        self.assertEqual(
+                            command[1:],
+                            ["-I", "-B", sdk, "binding-consumer", "nuget", str(package)],
+                        )
+                        if changed == "package":
+                            package.write_bytes(b"changed after acceptance")
 
                 options = [] if desktop else ["--skip-desktop"]
                 (native.parent.parent / "desktop-acceptance").mkdir(parents=True)
                 env = {"NAVI_CI_ARTIFACTS": str(output), "DOTNET_BIN": str(root / "dotnet.exe")}
                 backend = Mock()
                 backend.host_architecture.return_value = "arm64"
+                tooling = Mock()
+                tooling.command.return_value = [
+                    sys.executable,
+                    "-I",
+                    "-B",
+                    sdk,
+                    "binding-consumer",
+                    "nuget",
+                    package,
+                ]
                 with (
                     patch.object(sys, "platform", "win32"),
                     patch.dict(os.environ, env, clear=True),
-                    patch.object(ci, "load", return_value=backend),
+                    patch.object(
+                        ci,
+                        "load",
+                        side_effect={"windows": backend, "binding_checks": tooling}.__getitem__,
+                    ),
                     patch.object(
                         ci,
                         "support_inputs",
@@ -135,9 +150,10 @@ class WindowsToolsTests(unittest.TestCase):
                             ci.main(root=root, argv=options)
                     else:
                         ci.main(root=root, argv=options)
+                tooling.command.assert_called_once_with("nuget", package)
                 self.assertEqual(
-                    seen,
-                    ["tools/check-windows.py", "tools/pack-dotnet.py", "tools/test-package.py"],
+                    [command[0] for command in seen],
+                    ["tools/check-windows.py", "tools/pack-dotnet.py", "-I"],
                 )
                 backend.target_dotnet.assert_called_once_with("arm64", "x64", env)
                 expected = {"win-x64", "desktop-acceptance"} if desktop else {"win-x64"}

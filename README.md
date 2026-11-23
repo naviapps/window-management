@@ -206,7 +206,7 @@ or replacement-window fallback. macOS command details belong to the
 `crates/` owns Rust, Windows resources and the C ABI; `Sources/` / `Tests/` own Swift
 and DocC. Managed projects live in `bindings/dotnet`, independent clients in `fixtures`,
 and retained frameworks/notices in `Artifacts` / `ThirdParty`. `tools/` contains the
-SDK's build and verification scripts.
+SDK-specific build specifications and fixtures.
 
 ## Development
 
@@ -224,8 +224,9 @@ mise exec -- make check
 ```
 
 The fetch prepares the Cargo cache for locked offline Rust checks. Formatting,
-Rust and Swift tests, and the standalone Swift consumer run from this checkout.
-Ordinary SwiftPM/C/NuGet consumers do not need developer setup.
+Rust and Swift tests run from this checkout. Formatting and the standalone Swift
+consumer use the public SDK Tooling CLI pinned in [mise.toml](mise.toml). Ordinary
+SwiftPM, C and NuGet consumers do not need developer tools.
 
 Use `mise exec -- make <target>` so pinned tools remain available in temporary clients.
 
@@ -249,9 +250,10 @@ results, raw-byte and Codable projection, native ownership and the public entry 
 
 ### Distribution verification
 
-The distribution checks use the private `naviapps/sdk-tooling` repository. For
-local maintainer checks, prepare a clean SDK Tooling checkout at the commit in
-[`tools/tooling-sources.json`](tools/tooling-sources.json) and set its absolute path:
+The [distribution plan](sdk-distribution.toml) selects this SDK's macOS and Windows
+x64 checks. For local checks that use the framework producer or Windows package
+driver, set `NAVI_SDK_TOOLING_SOURCE` to a clean SDK Tooling checkout at the revision
+in [mise.toml](mise.toml):
 
 ```sh
 export NAVI_SDK_TOOLING_SOURCE=/path/to/sdk-tooling
@@ -281,7 +283,7 @@ macOS. The Rust client uses a local Git mirror and fetches registry
 dependencies into a fresh cache before locked offline checks; the C client uses the
 copied framework/header. Both test synthetic placement and missing-display fallback.
 For shallow checkouts, pass a complete repository/bundle with
-`mise exec -- python3 -B tools/install-consumers.py --git-source <path>`; retain results
+`mise run sdk-tooling -- installed-consumers --git-source <path>`; retain results
 with an unused `--evidence` path outside the checkout. This does not test remote
 credentials, Windows DLLs or a framework rebuild.
 
@@ -297,12 +299,12 @@ and test a local package on macOS:
 
 ```sh
 mise exec -- python3 -B tools/pack-dotnet.py --runtime osx-arm64 --runtime osx-x64
-mise exec -- python3 -B tools/test-package.py .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
+mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
 The package fixture in `bindings/dotnet/tests/PackageConsumer/Program.cs` runs after
 receipt and byte checks in an isolated restore. `--package-source <directory>` selects a
-private/local feed; `test-package.py --dependency <nupkg>` adds dependencies to its empty
+private/local feed; `binding-consumer nuget --dependency <nupkg>` adds dependencies to its empty
 feed. No feed is published. Cross-OS packing checks provenance, while Mach-O/signature
 inspection must happen on macOS. Loading a macOS package does not verify Windows.
 DesktopActions resolves its WindowManagement dependency by its pinned commit.
@@ -330,7 +332,7 @@ builds x64 artifacts and runs the x64 fixtures through Windows emulation:
 $env:NAVI_SDK_TOOLING_SOURCE = "C:\path\to\sdk-tooling"
 python -B tools/check-windows.py --desktop
 python -B tools/pack-dotnet.py --runtime win-x64
-python -B tools/test-package.py .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
+mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
 The Windows x64 gate checks PE architecture, exports, CRT linkage, Rust and C fixtures,

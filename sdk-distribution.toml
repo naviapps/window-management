@@ -1,0 +1,14 @@
+[macos]
+commands = [
+  ["cargo", "fetch", "--locked"],
+  ["make", "check-distribution", "test-installed-consumers", "test-c", "test-dotnet"],
+  ["python", "-I", "-B", "{tooling}/tasks/sdk", "swift-consumer", "--distribution"],
+]
+
+[windows]
+commands = [
+  ["rustup", "install", "--no-self-update"],
+  ["cargo", "fmt", "--all", "--", "--check"],
+  ["python", "-E", "-S", "-B", "-m", "unittest", "discover", "-s", "tools/tests"],
+  ["python", "-I", "-B", "{tooling}/tasks/sdk", "windows", "tools/check-ci.py", "--skip-desktop"],
+]

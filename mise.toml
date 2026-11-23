@@ -18,8 +18,12 @@ uv = { version = "0.13.6", os = ["macos", "linux"] }
 
 [tasks.lint]
 description = "Check owned source formatting and semantic lint before builds"
-run = "python3 tools/quality.py check --dotnet"
+run = "mise run sdk-tooling -- quality check --dotnet"
 
 [tasks.format]
 description = "Format owned source without changing vendor or artifact bytes"
-run = "python3 tools/quality.py format --dotnet"
+run = "mise run sdk-tooling -- quality format --dotnet"
+
+[tasks.sdk-tooling]
+description = "Run the pinned shared SDK checks"
+run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@2921615e70d9239ce10202549751a25d18b8c0f7 sdk-tooling"
