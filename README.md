@@ -88,18 +88,23 @@ checks cannot establish arbitrary pointer validity.
 
 ### .NET
 
-.NET 10 consumers use `NaviApps.WindowManagement` from a private/local NuGet feed.
-The package carries its selected native runtimes; consumers need no Rust or MSVC
-toolchain. To add a package from a local feed in an existing project, replace the
-feed path and use the version of the package you received.
+.NET 10 consumers can download the combined `NaviApps.WindowManagement` NuGet
+package from a successful [distribution run](https://github.com/naviapps/sdk-tooling/actions/workflows/check-sdk-distribution.yml)
+for the selected revision. Verify its SHA-256 against the accompanying receipt.
+In a new directory, replace the feed path below with the absolute path to the
+downloaded package directory and use the version of the package you received.
 
 ```sh
-dotnet add package NaviApps.WindowManagement --version 0.1.0 --source /path/to/nuget-feed
+dotnet new console --framework net10.0 --no-restore
+dotnet package add NaviApps.WindowManagement --version "[0.1.0]" --no-restore
+dotnet restore --source "/absolute/path/to/sdk-packages" --packages ./.nuget-packages
 ```
 
-The package must include the runtime used by your app. On macOS the native
-assets are `osx-arm64` or `osx-x64`. Windows packages use `win-x64`. On Windows 11
-ARM64, run the installed package in an x64 .NET process under emulation.
+Use a fresh cache directory for each candidate with the same version and run
+with `dotnet run --no-restore` after restoring. The combined package includes
+`osx-arm64`, `osx-x64` and `win-x64`; consumers need no Rust or MSVC toolchain.
+On Windows 11 ARM64, run the installed package in an x64 .NET process under
+emulation.
 
 Keep the managed package and native runtime assets from the same SDK build. Private
 feed publication is separate from CI or local package generation. See the
