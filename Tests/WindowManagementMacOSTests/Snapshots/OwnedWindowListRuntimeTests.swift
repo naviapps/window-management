@@ -315,11 +315,13 @@ final class OwnedWindowListRuntimeTests: XCTestCase {
   private func writeEvidence(_ evidence: [String: Any], environment: [String: String]) throws {
     let data = try JSONSerialization.data(withJSONObject: evidence, options: [.sortedKeys])
     print("WINDOW_MANAGEMENT_OWNED_CG " + String(decoding: data, as: UTF8.self))
-    if let path = environment["WINDOW_MANAGEMENT_CG_EVIDENCE_PATH"] {
-      guard (path as NSString).isAbsolutePath else {
-        throw OwnedCGFailure.environment("The owned CG evidence path must be absolute")
+    if let directory = environment["NAVI_CI_ARTIFACTS"] {
+      guard directory.hasPrefix("/") else {
+        throw OwnedCGFailure.environment("The owned CG artifact directory must be absolute")
       }
-      try data.write(to: URL(fileURLWithPath: path), options: .atomic)
+      let destination = URL(fileURLWithPath: directory, isDirectory: true)
+        .appendingPathComponent("window-management-owned-cg.json")
+      try data.write(to: destination, options: .atomic)
     }
   }
 }
