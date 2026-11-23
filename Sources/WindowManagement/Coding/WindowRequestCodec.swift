@@ -49,7 +49,10 @@ enum WindowJSON {
     precondition(
       window_management_abi_version() == WINDOW_MANAGEMENT_ABI_VERSION,
       "Unsupported native window ABI")
-    guard let owner = create() else {
+    return try consume(create())
+  }
+  static func consume(_ owner: OpaquePointer?) throws -> Data {
+    guard let owner else {
       throw WindowRequestCodecError.invalidData("Native JSON owner is unavailable.")
     }
     defer { window_management_json_destroy(owner) }

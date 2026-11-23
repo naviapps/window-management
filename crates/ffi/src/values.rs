@@ -301,7 +301,7 @@ pub struct JsonView {
     pub length: usize,
 }
 impl Json {
-    fn from(result: Result<Vec<u8>, serde_json::Error>) -> Self {
+    pub(super) fn from(result: Result<Vec<u8>, serde_json::Error>) -> Self {
         match result {
             Ok(bytes) => Self { code: 0, bytes },
             Err(e) => Self {
@@ -310,7 +310,7 @@ impl Json {
             },
         }
     }
-    fn invalid() -> Self {
+    pub(super) fn invalid() -> Self {
         Self {
             code: 1,
             bytes: b"Invalid window JSON input or kind.".to_vec(),
@@ -342,7 +342,7 @@ pub extern "C" fn window_management_move_request_json(value: MoveRequestValue) -
 }
 /// # Safety
 /// Input must be readable for length bytes. kind:0 placement,1 selection,2 placement request,
-/// 3 move request,4 snapshot filter.
+/// 3 move request.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_value_json(
     kind: u32,
@@ -368,10 +368,6 @@ pub unsafe extern "C" fn window_management_value_json(
         ),
         3 => Json::from(
             serde_json::from_slice::<MoveRequest>(bytes).and_then(|v| serde_json::to_vec(&v)),
-        ),
-        4 => Json::from(
-            serde_json::from_slice::<window_management::SnapshotFilter>(bytes)
-                .and_then(|v| serde_json::to_vec(&v)),
         ),
         _ => Json::invalid(),
     };

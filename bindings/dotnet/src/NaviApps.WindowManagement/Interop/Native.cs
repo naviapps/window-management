@@ -28,7 +28,7 @@ internal struct NativeDisplay
 internal static unsafe partial class Native
 {
     private const string Library = "window_management_ffi";
-    internal static void EnsureAbi() { if (Version() != 5) throw new InvalidOperationException("Unsupported native window ABI."); }
+    internal static void EnsureAbi() { if (Version() != 6) throw new InvalidOperationException("Unsupported native window ABI."); }
     [DllImport(Library, EntryPoint = "window_management_abi_version")] private static extern uint Version();
     [DllImport(Library, EntryPoint = "window_management_rect_normalize")] internal static extern Rect Normalize(Rect value);
     [DllImport(Library, EntryPoint = "window_management_rect_contains")] internal static extern uint Contains(Rect value, double x, double y);

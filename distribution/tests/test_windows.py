@@ -57,7 +57,7 @@ class WindowsToolsTests(unittest.TestCase):
                 nuget.pack_native.assert_called_once()
                 call_ = nuget.pack_native.call_args
                 self.assertEqual(call_.args, (selected.return_value,))
-                self.assertEqual(call_.kwargs["argv"], command)
+                self.assertEqual(call_.kwargs["runtimes"], list(runtimes))
 
     def test_windows_build_selects_native_tools_for_the_x64_target(self):
         for host in ("x64", "arm64"):
@@ -66,7 +66,9 @@ class WindowsToolsTests(unittest.TestCase):
                 tempfile.TemporaryDirectory() as directory,
             ):
                 root = Path(directory).resolve()
-                (root / "mise.toml").write_text('[tools]\ndotnet = "10.0.403"\n')
+                (root / "global.json").write_text(
+                    '{"sdk":{"version":"10.0.403","rollForward":"disable"}}'
+                )
                 backend = Mock(MSVC_TARGETS=windows_delivery.windows.MSVC_TARGETS)
                 backend.host_architecture.return_value = host
                 compiler, dotnet = root / "msvc", str(root / "dotnet.exe")

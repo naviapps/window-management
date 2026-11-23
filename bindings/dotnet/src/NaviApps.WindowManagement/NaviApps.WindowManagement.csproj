@@ -1,7 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net10.0</TargetFramework><AllowUnsafeBlocks>true</AllowUnsafeBlocks><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors><GenerateDocumentationFile>true</GenerateDocumentationFile><IsPackable>false</IsPackable></PropertyGroup>
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><AllowUnsafeBlocks>true</AllowUnsafeBlocks><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors><GenerateDocumentationFile>true</GenerateDocumentationFile><IsPackable Condition="'$(SdkNativeRuntimeAssets)' == ''">false</IsPackable></PropertyGroup>
   <PropertyGroup><Description>Shared window geometry, display selection and native window control.</Description></PropertyGroup>
   <ItemGroup><InternalsVisibleTo Include="NaviApps.WindowManagement.Tests" /></ItemGroup>
+  <PropertyGroup>
+    <Authors>Navi Apps</Authors>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PublishRepositoryUrl>false</PublishRepositoryUrl>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../../../LICENSE" Pack="true" PackagePath="/" />
+    <None Include="../../../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../../../ThirdParty/**/*" Exclude="../../../../ThirdParty/**/.DS_Store;../../../../ThirdParty/**/registry-notices.json" Pack="true" PackagePath="ThirdParty/" />
+    <None Include="$(SdkNativeRuntimeAssets)/**/*" Condition="'$(SdkNativeRuntimeAssets)' != ''"
+          Pack="true" PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <PathMap>$(MSBuildProjectDirectory)=/window-management/bindings/dotnet/src/$(MSBuildProjectName)</PathMap>
   </PropertyGroup>

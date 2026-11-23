@@ -1,11 +1,10 @@
 [settings]
 # Keep the pinned Python ahead of the system copy inside Make recipes.
 activate_aggressive = true
-idiomatic_version_file_enable_tools = ["rust"]
+idiomatic_version_file_enable_tools = ["rust", "dotnet"]
 
 [tools]
 python = "3.15.1"
-dotnet = "10.0.403"
 ruff = "0.17.3"
 dprint = "0.64.3"
 jactionlint = "2.6.0"
@@ -25,4 +24,4 @@ run = "mise run sdk-tooling -- quality format --dotnet"
 
 [tasks.sdk-tooling]
 description = "Run the pinned shared SDK checks"
-run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@0ee371511aeb8081d858ea6b8d429b15e86fe328 sdk-tooling"
+run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@213f58bc1505f57b5768e7d1eed94a48487d31d0 sdk-tooling"

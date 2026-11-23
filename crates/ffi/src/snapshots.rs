@@ -1,24 +1,37 @@
+use super::values::Json;
 use window_management::{SnapshotFilter, SnapshotIdentityMatch};
 
 /// Immutable selection, safe to query concurrently while its owner remains live.
 pub struct WindowFilter(SnapshotFilter);
 
 /// # Safety
-/// Bytes must be readable for length. Construction copies all configuration;
-/// invalid/unknown/duplicate JSON fields return null without native OS effects.
+/// Bytes must be readable for length. JSON output must be writable and must
+/// not overlap input. It receives a separately owned canonical JSON result or
+/// diagnostic; the compiled selection is null on rejection.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn window_management_window_filter_create(
+pub unsafe extern "C" fn window_management_window_filter_compile(
     data: *const u8,
     length: usize,
+    json: *mut *mut Json,
 ) -> *mut WindowFilter {
-    if data.is_null() || length == 0 || length > isize::MAX as usize {
+    if !super::sized_buffer(json.cast_const(), 1) {
         return std::ptr::null_mut();
     }
-    let Ok(value) = serde_json::from_slice(unsafe { std::slice::from_raw_parts(data, length) })
-    else {
-        return std::ptr::null_mut();
+    let (filter, result) = if length != 0 && super::sized_buffer(data, length) {
+        let bytes = unsafe { std::slice::from_raw_parts(data, length) };
+        match serde_json::from_slice::<SnapshotFilter>(bytes)
+            .and_then(|filter| serde_json::to_vec(&filter).map(|bytes| (filter, bytes)))
+        {
+            Ok((filter, bytes)) => (Some(filter), Json::from(Ok(bytes))),
+            Err(error) => (None, Json::from(Err(error))),
+        }
+    } else {
+        (None, Json::invalid())
     };
-    Box::into_raw(Box::new(WindowFilter(value)))
+    unsafe { json.write(Box::into_raw(Box::new(result))) };
+    filter.map_or(std::ptr::null_mut(), |value| {
+        Box::into_raw(Box::new(WindowFilter(value)))
+    })
 }
 
 /// # Safety

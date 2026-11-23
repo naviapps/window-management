@@ -25,7 +25,7 @@ pub struct RectResult {
 }
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_abi_version() -> u32 {
-    5
+    6
 }
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_rect_normalize(rect: Rect) -> Rect {

@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 namespace NaviApps.WindowManagement;
 
@@ -29,10 +28,7 @@ public sealed class WindowSnapshotFilter : IDisposable
     { }
     private WindowSnapshotFilter(ReadOnlySpan<byte> data)
     {
-        var canonical = Native.ValueJson(4, data);
-        json = Encoding.UTF8.GetString(canonical);
-        owner = Native.CreateFilter(canonical);
-        if (owner.IsInvalid) throw new WindowDataException("Cannot create a native snapshot filter.");
+        (owner, json) = Native.CompileFilter(data);
     }
 
     private static string[] CaptureIdentifiers(IEnumerable<string>? identifiers)

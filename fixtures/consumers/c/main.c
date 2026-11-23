@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <float.h>
 #include <stdio.h>
+#include <string.h>
 
 static void expect_frame(WindowManagementRectResult result, WindowManagementRect expected) {
     assert(result.code == 0);
@@ -17,8 +18,21 @@ int main(void) {
     const uint8_t selection[] = "{\"includedWindowIdentifiers\":[42,18446744073709551615],"
                                 "\"includedOwnerProcessIdentifiers\":[12,-9223372036854775808],"
                                 "\"excludedOwnerApplicationIdentifiers\":[\"\"]}";
+    WindowManagementJson *selection_json = NULL;
     WindowManagementWindowFilter *filter =
-        window_management_window_filter_create(selection, sizeof selection - 1);
+        window_management_window_filter_compile(selection, sizeof selection - 1, &selection_json);
+    assert(filter);
+    const uint8_t canonical[] =
+        "{\"includedOwnerApplicationIdentifiers\":[],"
+        "\"includedOwnerProcessIdentifiers\":[-9223372036854775808,12],"
+        "\"includedWindowIdentifiers\":[42,18446744073709551615],"
+        "\"excludedOwnerApplicationIdentifiers\":[\"\"],\"excludedOwnerProcessIdentifiers\":[],"
+        "\"excludedWindowIdentifiers\":[]}";
+    WindowManagementJsonView selection_view = window_management_json_view(selection_json);
+    assert(selection_view.code == 0 && selection_view.data);
+    assert(selection_view.length == sizeof canonical - 1);
+    assert(memcmp(selection_view.data, canonical, selection_view.length) == 0);
+    window_management_json_destroy(selection_json);
     assert(window_management_window_filter_match_identity(filter, 7, 12) == 0);
     assert(window_management_window_filter_match_identity(filter, 42, 12) == 3);
     assert(window_management_window_filter_match_identity(filter, UINT64_MAX, INT64_MIN) == 3);

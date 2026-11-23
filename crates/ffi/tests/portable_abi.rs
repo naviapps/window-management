@@ -17,6 +17,17 @@ unsafe extern "C" {
     fn window_management_value_json(kind: u32, input: *const u8, length: usize) -> *mut c_void;
     fn window_management_json_view(owner: *const c_void) -> JsonView;
     fn window_management_json_destroy(owner: *mut c_void);
+    fn window_management_window_filter_compile(
+        input: *const u8,
+        length: usize,
+        json_out: *mut *mut c_void,
+    ) -> *mut c_void;
+    fn window_management_window_filter_match_identity(
+        owner: *const c_void,
+        window: u64,
+        process: i64,
+    ) -> u32;
+    fn window_management_window_filter_destroy(owner: *mut c_void);
 }
 
 struct OwnedJson(*mut c_void);
@@ -46,11 +57,32 @@ impl Drop for OwnedJson {
     }
 }
 
+struct OwnedFilter(*mut c_void);
+
+impl OwnedFilter {
+    fn compile(input: &[u8]) -> (Option<Self>, OwnedJson) {
+        let mut json = ptr::null_mut();
+        let owner = unsafe {
+            window_management_window_filter_compile(input.as_ptr(), input.len(), &mut json)
+        };
+        (
+            (!owner.is_null()).then(|| Self(owner)),
+            OwnedJson::new(json),
+        )
+    }
+}
+
+impl Drop for OwnedFilter {
+    fn drop(&mut self) {
+        unsafe { window_management_window_filter_destroy(self.0) }
+    }
+}
+
 const DISPLAY: &str = r#"{"kind":"point","x":-0.0,"y":5e-324}"#;
 
 #[test]
 fn copied_json_round_trips_after_the_input_and_owner_are_released() {
-    assert_eq!(ffi::window_management_abi_version(), 5);
+    assert_eq!(ffi::window_management_abi_version(), 6);
     let retained = OwnedJson::parse(1, DISPLAY.as_bytes());
     for (kind, input, canonical) in [
         (
@@ -68,15 +100,6 @@ fn copied_json_round_trips_after_the_input_and_owner_are_released() {
             3,
             r#"{"direction":"previous"}"#,
             r#"{"direction":"previous","preservesRelativePosition":true}"#,
-        ),
-        (
-            4,
-            r#"{"includedOwnerApplicationIdentifiers":["\u00e9","e\u0301",""],"includedWindowIdentifiers":[18446744073709551615,0]}"#,
-            concat!(
-                r#"{"includedOwnerApplicationIdentifiers":["","é","é"],"#,
-                r#""includedOwnerProcessIdentifiers":[],"includedWindowIdentifiers":[0,18446744073709551615],"#,
-                r#""excludedOwnerApplicationIdentifiers":[],"excludedOwnerProcessIdentifiers":[],"excludedWindowIdentifiers":[]}"#,
-            ),
         ),
     ] {
         for _ in 0..200 {
@@ -119,12 +142,7 @@ fn invalid_json_returns_owned_utf8_diagnostics_without_disturbing_live_results()
             br#"{"direction":"next","preservesRelativePosition":null}"#.as_slice(),
             "expected a boolean",
         ),
-        (
-            4,
-            b"{\"includedOwnerApplicationIdentifiers\":[\"\xff\"]}",
-            "invalid unicode code point",
-        ),
-        (99, b"{}", "Invalid window JSON input or kind."),
+        (4, b"{}", "Invalid window JSON input or kind."),
         (2, b"", "Invalid window JSON input or kind."),
     ];
     for (kind, input, expected) in invalid {
@@ -147,6 +165,59 @@ fn invalid_json_returns_owned_utf8_diagnostics_without_disturbing_live_results()
         assert!(missing.data.is_null());
         assert_eq!(missing.length, 0);
         window_management_json_destroy(ptr::null_mut());
+    }
+}
+
+#[test]
+fn compiled_filter_and_canonical_json_have_independent_owners() {
+    let mut input =
+        br#"{"includedOwnerApplicationIdentifiers":["\u00e9","e\u0301",""],"includedWindowIdentifiers":[18446744073709551615,0]}"#
+            .to_vec();
+    let (filter, json) = OwnedFilter::compile(&input);
+    input.fill(b'Z');
+    drop(input);
+    drop(filter.unwrap());
+
+    let canonical = concat!(
+        r#"{"includedOwnerApplicationIdentifiers":["","é","é"],"#,
+        r#""includedOwnerProcessIdentifiers":[],"includedWindowIdentifiers":[0,18446744073709551615],"#,
+        r#""excludedOwnerApplicationIdentifiers":[],"excludedOwnerProcessIdentifiers":[],"excludedWindowIdentifiers":[]}"#,
+    );
+    assert_eq!(json.result(), (0, canonical.as_bytes()));
+    let copied = json.result().1.to_vec();
+    drop(json);
+    let (filter, json) = OwnedFilter::compile(&copied);
+    let filter = filter.unwrap();
+    assert_eq!(json.result(), (0, copied.as_slice()));
+    drop(json);
+    assert_eq!(
+        unsafe { window_management_window_filter_match_identity(filter.0, u64::MAX, 12) },
+        3
+    );
+    assert_eq!(
+        unsafe { window_management_window_filter_match_identity(filter.0, 42, 12) },
+        0
+    );
+}
+
+#[test]
+fn malformed_filter_returns_only_an_owned_utf8_diagnostic() {
+    for (input, expected) in [
+        (
+            b"{\"includedOwnerApplicationIdentifiers\":[\"\xff\"]}".as_slice(),
+            "invalid unicode code point",
+        ),
+        (
+            br#"{"includedWindowIdentifiers":[1],"includedWindowIdentifiers":[2]}"#.as_slice(),
+            "duplicate field",
+        ),
+        (br#"{"unknown":true}"#.as_slice(), "unknown field"),
+    ] {
+        let (filter, failed) = OwnedFilter::compile(input);
+        assert!(filter.is_none());
+        let (status, bytes) = failed.result();
+        assert_eq!(status, 1);
+        assert!(std::str::from_utf8(bytes).unwrap().contains(expected));
     }
 }
 

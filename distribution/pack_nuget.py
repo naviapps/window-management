@@ -2,7 +2,6 @@
 """Select this SDK's managed package and retained notices; publish nothing."""
 
 import argparse
-import tomllib
 from pathlib import Path
 
 from sdk_tooling.adapters import load
@@ -33,8 +32,6 @@ def main(argv=None):
         native,
         project=root
         / "bindings/dotnet/src/NaviApps.WindowManagement/NaviApps.WindowManagement.csproj",
-        version=tomllib.loads((root / "Cargo.toml").read_text())["workspace"]["package"]["version"],
-        authors="Navi Apps",
         package_files=selected,
         nuget_config=root / "bindings/dotnet/NuGet.Config",
         input_files=[
@@ -42,8 +39,8 @@ def main(argv=None):
             root / "native.toml",
             root / "mise.toml",
         ],
-        argv=[value for rid in args.runtime for value in ("--runtime", rid)]
-        + [value for source in args.package_source for value in ("--package-source", source)],
+        runtimes=args.runtime,
+        sources=args.package_source,
     )
 
 

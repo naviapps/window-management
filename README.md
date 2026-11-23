@@ -66,7 +66,12 @@ does not establish build or runtime support at the declared minimum.
 
 ### C
 
-The native ABI is 5. Keep headers and native libraries from the same SDK build.
+The native ABI is 6. Keep headers and native libraries from the same SDK build.
+
+Compile a snapshot filter with `window_management_window_filter_compile`.
+The separate JSON result contains the canonical filter or a diagnostic.
+Destroy the JSON result after copying its bytes. The compiled filter remains
+available for queries until its own destruction.
 
 A macOS C client installs `CWindowManagement.framework` from the universal
 macOS 26 slice of `Artifacts/CWindowManagement.xcframework`, preserving its

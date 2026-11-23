@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Text;
 using Microsoft.Win32.SafeHandles;
 namespace NaviApps.WindowManagement;
 
@@ -9,10 +10,23 @@ internal sealed class WindowFilterHandle : SafeHandleZeroOrMinusOneIsInvalid
 }
 internal static unsafe partial class Native
 {
-    internal static WindowFilterHandle CreateFilter(ReadOnlySpan<byte> json)
+    internal static (WindowFilterHandle Owner, string Json) CompileFilter(ReadOnlySpan<byte> json)
     {
         EnsureAbi();
-        fixed (byte* data = json) return FilterCreate(data, (nuint)json.Length);
+        WindowFilterHandle owner;
+        JsonHandle result;
+        fixed (byte* data = json) owner = FilterCompile(data, (nuint)json.Length, out result);
+        try
+        {
+            var canonical = Encoding.UTF8.GetString(CopyJson(result));
+            if (owner.IsInvalid) throw new InvalidOperationException("Native snapshot filter owner is unavailable.");
+            return (owner, canonical);
+        }
+        catch
+        {
+            owner.Dispose();
+            throw;
+        }
     }
     internal static bool FilterIncludes(WindowFilterHandle filter, ulong window, long process, string? application)
     {
@@ -26,7 +40,7 @@ internal static unsafe partial class Native
         }
         return result switch { 0 => false, 1 => true, _ => throw new InvalidDataException("Invalid native snapshot filter response.") };
     }
-    [DllImport(Library, EntryPoint = "window_management_window_filter_create")] private static extern WindowFilterHandle FilterCreate(byte* data, nuint length);
+    [DllImport(Library, EntryPoint = "window_management_window_filter_compile")] private static extern WindowFilterHandle FilterCompile(byte* data, nuint length, out JsonHandle json);
     [DllImport(Library, EntryPoint = "window_management_window_filter_match_identity")] internal static extern uint FilterMatchIdentity(WindowFilterHandle filter, ulong window, long process);
     [DllImport(Library, EntryPoint = "window_management_window_filter_includes")] private static extern uint FilterMatch(WindowFilterHandle filter, ulong window, long process, byte* application, nuint length);
     [DllImport(Library, EntryPoint = "window_management_window_filter_destroy")] internal static extern void DestroyFilter(nint filter);

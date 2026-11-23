@@ -2,7 +2,7 @@
 #define WINDOW_MANAGEMENT_H
 #include <stdint.h>
 #include <stddef.h>
-#define WINDOW_MANAGEMENT_ABI_VERSION 5U
+#define WINDOW_MANAGEMENT_ABI_VERSION 6U
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -80,7 +80,7 @@ typedef struct {
     const uint8_t *data;
     size_t length;
 } WindowManagementJsonView;
-/* kind:0 placement,1 display target,2 placement request,3 move request,4 snapshot filter.
+/* kind:0 placement,1 display target,2 placement request,3 move request.
    Result code 0 is canonical JSON; code 1 is UTF-8 diagnostic text.
    Input is borrowed during the call; result views borrow their owner until destruction. */
 WindowManagementJson *window_management_value_json(uint32_t kind, const uint8_t *data,
@@ -93,17 +93,21 @@ window_management_placement_request_json(WindowManagementPlacementRequest value)
 WindowManagementJson *window_management_move_request_json(WindowManagementMoveRequest value);
 WindowManagementJsonView window_management_json_view(const WindowManagementJson *owner);
 void window_management_json_destroy(WindowManagementJson *owner);
-/* Immutable compiled snapshot filter. Creation copies validated JSON; null means
- * invalid data. Missing application ID is null/zero, present empty ID is nonnull/zero.
- * Includes returns 0 excluded,1 included,2 invalid view/handle. Queries may be
- * concurrent; destruction requires exclusive ownership and no queries in flight. */
+/* Compile original JSON in one pass. The nonnull json output slot must be
+ * writable and must not overlap the input. It receives an independently owned
+ * canonical JSON result (code 0) or diagnostic (code 1). The compiled filter is
+ * null on rejection. Destroy both owners independently using their own functions.
+ * Concurrent filter queries are allowed; destruction needs exclusive ownership. */
 typedef struct WindowManagementWindowFilter WindowManagementWindowFilter;
-WindowManagementWindowFilter *window_management_window_filter_create(const uint8_t *data,
-                                                                     size_t length);
+WindowManagementWindowFilter *window_management_window_filter_compile(const uint8_t *data,
+                                                                      size_t length,
+                                                                      WindowManagementJson **json);
 /* Evaluate numeric IDs first: 0 excluded, 1 included, 2 invalid handle, 3 application conditions
    still need evaluation through window_management_window_filter_includes. */
 uint32_t window_management_window_filter_match_identity(const WindowManagementWindowFilter *filter,
                                                         uint64_t window, int64_t process);
+/* Missing application ID is null/zero, present empty ID is nonnull/zero.
+   Returns 0 excluded, 1 included, 2 invalid view/handle. */
 uint32_t window_management_window_filter_includes(const WindowManagementWindowFilter *filter,
                                                   uint64_t window, int64_t process,
                                                   const uint8_t *application, size_t length);

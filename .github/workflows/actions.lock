@@ -27,7 +27,7 @@ dependencies:
         repo_id: 738284564
     'naviapps/sdk-tooling@main':
         ref: 'main'
-        commit: 'sha1-306b97044d6d2ed4769a22e22034981dbb932f4c'
+        commit: 'sha1-213f58bc1505f57b5768e7d1eed94a48487d31d0'
         owner_id: 14840203
         repo_id: 1439873358
         uses:

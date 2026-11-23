@@ -72,10 +72,10 @@ public struct WindowSnapshotFilter: Hashable, Sendable, Codable {
 
   /// Decode original JSON through Rust, including defaults and duplicate-key checks.
   public init(jsonData: Data) throws {
-    let normalized = try WindowJSON.normalize(jsonData, kind: 4)
-    values = try JSONDecoder().decode(Values.self, from: normalized)
-    compiled = try CompiledWindowFilter(normalized)
-    self.jsonData = normalized
+    let (compiled, canonical) = try CompiledWindowFilter.compile(jsonData)
+    values = try JSONDecoder().decode(Values.self, from: canonical)
+    self.compiled = compiled
+    self.jsonData = canonical
   }
 
   /// Decodes with Rust defaults and validation. Use `init(jsonData:)` to detect duplicate JSON keys.
@@ -112,18 +112,24 @@ public struct WindowSnapshotFilter: Hashable, Sendable, Codable {
 /// Immutable native data; ARC owns destruction and all queries borrow self through the C call.
 private final class CompiledWindowFilter: @unchecked Sendable {
   private let owner: OpaquePointer
-  init(_ data: Data) throws {
+  private init(owner: OpaquePointer) { self.owner = owner }
+  deinit { window_management_window_filter_destroy(owner) }
+  static func compile(_ data: Data) throws -> (CompiledWindowFilter, Data) {
     precondition(
       window_management_abi_version() == WINDOW_MANAGEMENT_ABI_VERSION,
       "Unsupported native window ABI")
-    guard
-      let owner = data.withUnsafeBytes({
-        window_management_window_filter_create($0.bindMemory(to: UInt8.self).baseAddress, $0.count)
-      })
-    else { throw WindowRequestCodecError.invalidData("Cannot create a native snapshot filter") }
-    self.owner = owner
+    var json: OpaquePointer?
+    let owner = data.withUnsafeBytes {
+      window_management_window_filter_compile(
+        $0.bindMemory(to: UInt8.self).baseAddress, $0.count, &json)
+    }
+    let compiled = owner.map(CompiledWindowFilter.init(owner:))
+    let canonical = try WindowJSON.consume(json)
+    guard let compiled else {
+      throw WindowRequestCodecError.invalidData("Native snapshot filter owner is unavailable.")
+    }
+    return (compiled, canonical)
   }
-  deinit { window_management_window_filter_destroy(owner) }
   func matchIdentity(window: UInt64, process: Int64) -> WindowSnapshotIdentityMatch {
     withExtendedLifetime(self) {
       let result = window_management_window_filter_match_identity(owner, window, process)

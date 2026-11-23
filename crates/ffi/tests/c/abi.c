@@ -11,9 +11,13 @@
 int main(void) {
     const char *filter_json = "{\"includedOwnerApplicationIdentifiers\":[\"\"],"
                               "\"includedWindowIdentifiers\":[18446744073709551615]}";
-    WindowManagementWindowFilter *filter =
-        window_management_window_filter_create((const uint8_t *)filter_json, strlen(filter_json));
+    WindowManagementJson *filter_json_owner = NULL;
+    WindowManagementWindowFilter *filter = window_management_window_filter_compile(
+        (const uint8_t *)filter_json, strlen(filter_json), &filter_json_owner);
     assert(filter);
+    WindowManagementJsonView filter_view = window_management_json_view(filter_json_owner);
+    assert(filter_view.code == 0 && filter_view.data && filter_view.length);
+    window_management_json_destroy(filter_json_owner);
     assert(window_management_window_filter_match_identity(filter, UINT64_MAX, 12) == 3);
     assert(window_management_window_filter_match_identity(filter, 1, 12) == 0);
     assert(window_management_window_filter_match_identity(NULL, 1, 12) == 2);
@@ -24,12 +28,19 @@ int main(void) {
     assert(window_management_window_filter_includes(filter, UINT64_MAX, 12, invalid_utf8, 1) == 2);
     assert(window_management_window_filter_includes(filter, UINT64_MAX, 12, NULL, 1) == 2);
     window_management_window_filter_destroy(filter);
-    filter = window_management_window_filter_create((const uint8_t *)"{}", 2);
+    filter = window_management_window_filter_compile((const uint8_t *)"{}", 2, &filter_json_owner);
     assert(window_management_window_filter_match_identity(filter, 1, 12) == 1);
     window_management_window_filter_destroy(filter);
-    assert(window_management_window_filter_create((const uint8_t *)"{\"unknown\":true}", 16) ==
-           NULL);
-    assert(window_management_window_filter_includes(NULL, 0, 0, NULL, 0) == 2);
+    assert(window_management_json_view(filter_json_owner).code == 0);
+    window_management_json_destroy(filter_json_owner);
+    const uint8_t invalid_filter[] = "{\"unknown\":true}";
+    filter = window_management_window_filter_compile(invalid_filter, sizeof invalid_filter - 1,
+                                                     &filter_json_owner);
+    assert(!filter);
+    filter_view = window_management_json_view(filter_json_owner);
+    assert(filter_view.code == 1 && filter_view.data && filter_view.length);
+    assert(window_management_window_filter_includes(filter, 0, 0, NULL, 0) == 2);
+    window_management_json_destroy(filter_json_owner);
     window_management_window_filter_destroy(NULL);
     assert(window_management_rect_contains((WindowManagementRect){0, 0, 10, 10}, 0, 0) == 1);
     assert(window_management_rect_contains((WindowManagementRect){0, 0, 10, 10}, 10, 0) == 0);
