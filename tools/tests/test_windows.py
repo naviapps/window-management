@@ -5,7 +5,6 @@ import importlib
 import json
 import os
 import struct
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -31,72 +30,54 @@ class WindowsToolsTests(unittest.TestCase):
         self.assertEqual(rejected.exception.code, 2)
         builder.assert_not_called()
 
-    def test_candidate_windows_consumer_passes_x64_to_the_shared_driver(self):
-        with (
-            patch.object(sys, "platform", "win32"),
-            patch.object(windows, "select_candidate") as select,
-        ):
-            result = windows.consumer_options(
-                ["package.nupkg", "--tooling-source", "candidate", "--tooling-revision", "a" * 40]
-            )
+    def test_windows_consumer_passes_x64_to_the_driver(self):
+        with patch.object(sys, "platform", "win32"):
+            result = windows.consumer_options(["package.nupkg"])
         self.assertEqual(result, ["package.nupkg", "--windows-architecture", "x64"])
-        self.assertEqual(select.call_args.args[1].tooling_source, Path("candidate"))
 
-    def test_windows_arm64_without_candidate_stops_before_a_native_build(self):
-        with (
-            patch.object(sys, "platform", "win32"),
-            patch.object(windows.platform, "machine", return_value="ARM64"),
-            patch.object(build, "builder") as builder,
-            patch.object(sys, "stderr"),
-            self.assertRaises(SystemExit),
-        ):
-            build.main(argv=["--build-only"])
-        builder.assert_not_called()
-
-    def test_candidate_build_selects_arm64_tools_for_the_x64_target(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory).resolve()
-            (root / "mise.toml").write_text('[tools]\ndotnet = "10.0.403"\n')
-            backend = Mock()
-            backend.host_architecture.return_value = "arm64"
-            compiler, dotnet = root / "msvc", str(root / "dotnet.exe")
-            environment = {}
-            backend.native_environment.return_value = environment, compiler, dotnet
-            native = Mock()
-            options = [
-                "--build-only",
-                "--tooling-source",
-                str(root),
-                "--tooling-revision",
-                "a" * 40,
-            ]
+    def test_windows_build_selects_native_tools_for_the_x64_target(self):
+        for host in ("x64", "arm64"):
             with (
-                patch.object(sys, "platform", "win32"),
-                patch.dict(os.environ, {"DOTNET_HOST_PATH": "host default"}, clear=True),
-                patch.object(build, "select_candidate") as select,
-                patch.object(build, "verify_candidate") as verify,
-                patch.object(build, "load", return_value=backend),
-                patch.object(build, "builder", return_value=native),
-                patch.object(build.subprocess, "check_output", return_value="10.0.403\n"),
-                patch.object(build.subprocess, "run") as run,
-                patch("builtins.print"),
+                self.subTest(host=host),
+                tempfile.TemporaryDirectory() as directory,
             ):
-                build.main(root=root, argv=options)
-            select.assert_called_once()
-            verify.assert_called_once_with()
-            backend.native_environment.assert_called_once_with(
-                "arm64", {}, target_architecture="x64"
-            )
-            backend.build_library.assert_called_once_with(
-                native, environment, compiler, "x64", native_host="arm64"
-            )
-            self.assertEqual(environment["DOTNET_BIN"], dotnet)
-            self.assertEqual(
-                run.call_args.args[0], ["cargo", "fetch", "--locked", "--target", windows.TARGET]
-            )
+                root = Path(directory).resolve()
+                (root / "mise.toml").write_text('[tools]\ndotnet = "10.0.403"\n')
+                backend = Mock()
+                backend.host_architecture.return_value = host
+                compiler, dotnet = root / "msvc", str(root / "dotnet.exe")
+                environment = {}
+                backend.native_environment.return_value = environment, compiler, dotnet
+                native = Mock()
+                with (
+                    patch.object(sys, "platform", "win32"),
+                    patch.dict(os.environ, {"DOTNET_HOST_PATH": "host default"}, clear=True),
+                    patch.object(build, "load", return_value=backend),
+                    patch.object(build, "builder", return_value=native),
+                    patch.object(build.subprocess, "check_output", return_value="10.0.403\n"),
+                    patch.object(build.subprocess, "run") as run,
+                    patch("builtins.print"),
+                ):
+                    build.main(root=root, argv=["--build-only"])
+                backend.native_environment.assert_called_once_with(
+                    host, {}, target_architecture="x64"
+                )
+                backend.build_library.assert_called_once_with(
+                    native, environment, compiler, "x64", native_host=host
+                )
+                self.assertEqual(environment["DOTNET_BIN"], dotnet)
+                self.assertEqual(
+                    run.call_args.args[0],
+                    ["cargo", "fetch", "--locked", "--target", windows.TARGET],
+                )
 
     def test_hosted_evidence_contains_only_the_installed_x64_package(self):
-        for changed, desktop in ((False, True), (False, False), (True, False)):
+        for changed, desktop in (
+            (None, True),
+            (None, False),
+            ("package", False),
+            ("support", False),
+        ):
             with (
                 self.subTest(package_changed=changed, desktop=desktop),
                 tempfile.TemporaryDirectory() as directory,
@@ -110,13 +91,12 @@ class WindowsToolsTests(unittest.TestCase):
 
                 def run(command, **_options):
                     seen.append(command[1])
-                    self.assertEqual(command[-4:], tooling)
                     if command[1] == "tools/check-windows.py":
-                        self.assertEqual("--desktop" in command, desktop)
+                        self.assertEqual(command[2:], ["--desktop"] if desktop else [])
                         native.parent.mkdir(parents=True)
                         native.write_text("{}")
                     elif command[1] == "tools/pack-dotnet.py":
-                        self.assertEqual(command[2:4], ["--runtime", "win-x64"])
+                        self.assertEqual(command[2:], ["--runtime", "win-x64"])
                         package.parent.mkdir(parents=True)
                         package.write_bytes(b"accepted")
                         package.with_suffix(".nupkg.json").write_text(
@@ -130,11 +110,10 @@ class WindowsToolsTests(unittest.TestCase):
                                 }
                             )
                         )
-                    elif changed:
+                    elif changed == "package":
                         package.write_bytes(b"changed after acceptance")
 
-                tooling = ["--tooling-source", str(root), "--tooling-revision", "a" * 40]
-                options = tooling if desktop else ["--skip-desktop", *tooling]
+                options = [] if desktop else ["--skip-desktop"]
                 (native.parent.parent / "desktop-acceptance").mkdir(parents=True)
                 env = {"NAVI_CI_ARTIFACTS": str(output), "DOTNET_BIN": str(root / "dotnet.exe")}
                 backend = Mock()
@@ -142,13 +121,16 @@ class WindowsToolsTests(unittest.TestCase):
                 with (
                     patch.object(sys, "platform", "win32"),
                     patch.dict(os.environ, env, clear=True),
-                    patch.object(ci, "select_candidate"),
                     patch.object(ci, "load", return_value=backend),
-                    patch.object(ci, "verify_candidate"),
+                    patch.object(
+                        ci,
+                        "support_inputs",
+                        side_effect=[{}, {"build.py": "updated"} if changed == "support" else {}],
+                    ),
                     patch.object(ci.subprocess, "run", side_effect=run),
                 ):
                     if changed:
-                        with self.assertRaisesRegex(ValueError, "package changed"):
+                        with self.assertRaisesRegex(ValueError, f"{changed} changed"):
                             ci.main(root=root, argv=options)
                     else:
                         ci.main(root=root, argv=options)
@@ -247,37 +229,6 @@ class WindowsToolsTests(unittest.TestCase):
                     ),
                 ],
             )
-
-    def test_desktop_pinned_tooling_reports_fixture_failure_before_cleanup_failure(self):
-        missing = ModuleNotFoundError(
-            "Pinned tooling has no workspace helper", name="sdk_tooling.workspaces"
-        )
-        cleanup_error = PermissionError("Native desktop library remains open")
-        cleanup_error.winerror = 5
-        with tempfile.TemporaryDirectory() as parent:
-            for fixture_error in (None, subprocess.CalledProcessError(7, ["dotnet", "fixture"])):
-                with (
-                    self.subTest(fixture_error=fixture_error),
-                    patch.object(build, "load", side_effect=missing),
-                    patch.object(tempfile.TemporaryDirectory, "_rmtree", side_effect=cleanup_error),
-                    self.assertRaises(type(fixture_error or cleanup_error)) as context,
-                ):
-                    with build._desktop_workspace(Path(parent)):
-                        if fixture_error is not None:
-                            raise fixture_error
-                self.assertIs(context.exception, fixture_error or cleanup_error)
-                if fixture_error is not None:
-                    self.assertIn("Native desktop library remains open", fixture_error.__notes__[0])
-
-    def test_desktop_tooling_inner_import_failure_does_not_select_the_fallback(self):
-        missing = ModuleNotFoundError("Missing tooling dependency", name="unexpected_extension")
-        with (
-            patch.object(build, "load", side_effect=missing),
-            self.assertRaises(ModuleNotFoundError) as error,
-        ):
-            with build._desktop_workspace(Path("unused")):
-                self.fail("Unexpected workspace")
-        self.assertIs(error.exception, missing)
 
 
 if __name__ == "__main__":

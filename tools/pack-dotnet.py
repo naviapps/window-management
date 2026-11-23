@@ -5,20 +5,18 @@ import argparse
 import tomllib
 from pathlib import Path
 
-from _tooling import add_candidate_options, load, select_candidate, verify_candidate
+from _tooling import load, support_inputs
 from _windows import RID
 from native import builder
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    add_candidate_options(parser)
     parser.add_argument(
         "--runtime", action="append", required=True, choices=("osx-arm64", "osx-x64", RID)
     )
     parser.add_argument("--package-source", action="append", default=[])
     args = parser.parse_args(argv)
-    select_candidate(parser, args)
     native = builder()
     root = native.root
     selected = {"LICENSE": root / "LICENSE", "README.md": root / "README.md"}
@@ -37,15 +35,10 @@ def main(argv=None):
         authors="Navi Apps",
         package_files=selected,
         nuget_config=root / "bindings/dotnet/NuGet.Config",
-        input_files=[
-            Path(__file__),
-            root / "tools/_tooling.py",
-            root / "tools/tooling-sources.json",
-        ],
+        input_files=[Path(__file__), *(root / relative for relative in support_inputs())],
         argv=[value for rid in args.runtime for value in ("--runtime", rid)]
         + [value for source in args.package_source for value in ("--package-source", source)],
     )
-    verify_candidate()
 
 
 if __name__ == "__main__":

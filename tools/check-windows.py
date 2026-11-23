@@ -6,20 +6,17 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import tomllib
-from contextlib import contextmanager
 from pathlib import Path
 
-from _tooling import add_candidate_options, load, select_candidate, verify_candidate
-from _windows import RID, TARGET, require_native_x64
+from _tooling import load, support_inputs
+from _windows import RID, TARGET
 from native import builder
 
 
 def main(root=None, argv=None):
     root = Path(root or Path(__file__).resolve().parent.parent).resolve()
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    add_candidate_options(parser)
     parser.add_argument(
         "--desktop", action="store_true", help="Run this SDK's separate-process desktop fixture"
     )
@@ -39,30 +36,14 @@ def main(root=None, argv=None):
         raise SystemExit("Native Windows is required; cross-compilation is not runtime acceptance.")
     if args.build_only and args.desktop:
         parser.error("--build-only and --desktop select different validation scopes")
-    select_candidate(parser, args)
-    if args.tooling_source is None:
-        require_native_x64(parser)
+    inputs = support_inputs()
     native = builder()
     windows = load("windows")
     environment = {
         key.upper(): value for key, value in os.environ.items() if key.upper() != "DOTNET_HOST_PATH"
     }
-    if args.tooling_source is not None:
-        host = windows.host_architecture()
-        env, tools, dotnet = windows.native_environment(
-            host, environment, target_architecture="x64"
-        )
-        build_options = {"native_host": host}
-        candidate_options = [
-            "--tooling-source",
-            str(args.tooling_source.resolve()),
-            "--tooling-revision",
-            args.tooling_revision,
-        ]
-    else:
-        host = "x64"
-        env, tools, dotnet = windows.native_environment("x64", environment)
-        build_options, candidate_options = {}, []
+    host = windows.host_architecture()
+    env, tools, dotnet = windows.native_environment(host, environment, target_architecture="x64")
     version = subprocess.check_output([dotnet, "--version"], cwd=root, env=env, text=True).strip()
     if version != tomllib.loads((root / "mise.toml").read_text())["tools"]["dotnet"]:
         raise SystemExit("Use the pinned x64 .NET SDK from mise.toml")
@@ -72,8 +53,9 @@ def main(root=None, argv=None):
         subprocess.run([str(v) for v in command], cwd=root, env=env, check=True)
 
     run(["cargo", "fetch", "--locked", "--target", TARGET])
-    destination = windows.build_library(native, env, tools, "x64", **build_options)
-    verify_candidate()
+    destination = windows.build_library(native, env, tools, "x64", native_host=host)
+    if inputs != support_inputs():
+        raise ValueError("Build support changed during the Windows x64 build")
     if args.build_only:
         print(f"{root.name} Windows x64 artifact built on {host}. Fixtures did not run.")
         return
@@ -81,7 +63,7 @@ def main(root=None, argv=None):
     library = destination / (native.library + ".dll")
     with load("artifacts").build_lock(root / ".native-build"):
         windows.verify_artifact(native, architecture="x64", environment=env)
-        run([sys.executable, root / "tools/test-c.py", "--library", library, *candidate_options])
+        run([sys.executable, root / "tools/test-c.py", "--library", library])
         sources = [
             value for source in args.package_source for value in ("--package-source", source)
         ]
@@ -91,46 +73,19 @@ def main(root=None, argv=None):
                 root / "tools/test-dotnet.py",
                 "--native-root",
                 destination,
-                *candidate_options,
                 *sources,
             ]
         )
         if args.desktop:
             run_desktop(root, dotnet, env, library, args.package_source, run)
-    verify_candidate()
+    if inputs != support_inputs():
+        raise ValueError("Build support changed during Windows x64 fixture checks")
     print(
         root.name
         + " Windows x64 build/C/managed checks"
         + (" and owned desktop fixture" if args.desktop else "")
         + f" passed on {host}."
     )
-
-
-@contextmanager
-def _desktop_workspace(parent):
-    prefix = "desktop-consumer-"
-    try:
-        workspaces = load("workspaces")
-    except ModuleNotFoundError as error:
-        if error.name != "sdk_tooling.workspaces":
-            raise
-    else:
-        with workspaces.temporary_workspace(parent, prefix=prefix) as work:
-            yield work
-        return
-
-    # Older immutable tooling pins predate Windows workspace cleanup.
-    directory = tempfile.TemporaryDirectory(dir=parent, prefix=prefix)
-    try:
-        yield Path(directory.name)
-    except BaseException as error:
-        try:
-            directory.cleanup()
-        except OSError as cleanup_error:
-            error.add_note(f"Could not remove desktop workspace {directory.name}: {cleanup_error}")
-        raise
-    else:
-        directory.cleanup()
 
 
 def require_x64_desktop_target(executable):
@@ -193,7 +148,9 @@ def run_desktop(root, dotnet, env, library, sources, run):
     )
     executable = target_directory / TARGET / "debug/examples/test_owned_window_target.exe"
     require_x64_desktop_target(executable)
-    with _desktop_workspace(root / ".native-build") as workspace:
+    with load("workspaces").temporary_workspace(
+        root / ".native-build", prefix="desktop-consumer-"
+    ) as workspace:
         app = workspace / "app"
         shutil.copytree(output, app)
         bindings.stage_native(library, app / library.name)

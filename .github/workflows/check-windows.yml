@@ -12,7 +12,31 @@ concurrency:
   cancel-in-progress: true
 jobs:
   windows:
-    uses: naviapps/sdk-tooling/.github/workflows/check-sdk-windows.yml@2ec2db1d8629260420885a5c8a9e0f836cdead6f
-    with:
-      validation-arguments: '["tools/check-ci.py", "--skip-desktop"]'
-      check-rust-format: true
+    name: Build and verify x64 consumers
+    runs-on: windows-2025
+    timeout-minutes: 60
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_CLI_USE_MSBUILD_SERVER: "0"
+      MSBUILDDISABLENODEREUSE: "1"
+      GIT_TERMINAL_PROMPT: "0"
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.15.1"
+          architecture: x64
+      - name: Select the pinned Rust toolchain and check formatting
+        run: cargo fmt --all -- --check
+      - uses: actions/setup-dotnet@v6.0.0
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+        with:
+          dotnet-version: "10.0.403"
+          architecture: x64
+      - name: Run Windows x64 tooling fixtures
+        run: python -E -S -B -m unittest discover -s tools/tests
+      - name: Build the x64 DLL and validate C, .NET and installed NuGet consumers
+        run: python -E -S -B tools/windows-ci.py tools/check-ci.py --skip-desktop

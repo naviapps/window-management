@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Use pinned tooling with this SDK's existing fixture and native layout."""
+"""Run this SDK's managed fixture against its native library."""
 
-from _tooling import load, verify_candidate
+from _tooling import load
 from _windows import consumer_options
 from native import builder
 
@@ -25,7 +25,6 @@ def main(argv=None):
         cwd=root,
         argv=options,
     )
-    verify_candidate()
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Run this SDK's package fixture through the pinned local-feed consumer driver."""
+"""Restore and run this SDK's NuGet fixture from an isolated local feed."""
 
 from pathlib import Path
 
-from _tooling import load, verify_candidate
+from _tooling import load
 from _windows import consumer_options
 
 
@@ -16,7 +16,6 @@ def main(argv=None):
         work_parent=root / ".native-build/packages",
         argv=options,
     )
-    verify_candidate()
 
 
 if __name__ == "__main__":

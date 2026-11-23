@@ -205,16 +205,16 @@ or replacement-window fallback. macOS command details belong to the
 
 `crates/` owns Rust, Windows resources and the C ABI; `Sources/` / `Tests/` own Swift
 and DocC. Managed projects live in `bindings/dotnet`, independent clients in `fixtures`,
-and retained frameworks/notices in `Artifacts` / `ThirdParty`. `tools/` supplies SDK
-policy through pinned shared mechanisms.
+and retained frameworks/notices in `Artifacts` / `ThirdParty`. `tools/` contains the
+SDK's build and verification scripts.
 
 ## Development
 
 ### Setup and checks
 
 Run commands from the SDK root. Swift development requires Swift 6.3 or later
-on macOS 26 or later. Review `mise.toml`, `rust-toolchain.toml` and `tools/tooling-sources.json`
-before installing their pinned Python 3.15.1, Rust 1.99.1, .NET 10 and static tools:
+on macOS 26 or later. Review `mise.toml` and `rust-toolchain.toml` before installing
+their pinned Python 3.15.1, Rust 1.99.1, .NET 10 and static tools:
 
 ```sh
 mise trust mise.toml
@@ -223,12 +223,8 @@ mise exec -- cargo fetch --locked
 mise exec -- make check
 ```
 
-The fetch prepares the producer cache for locked offline Rust checks. Developer entry
-points use the immutable `sdk-tooling` pin; see its [setup](https://github.com/naviapps/sdk-tooling#readme)
-for verified caches and offline/source overrides. Shared guides
-own [quality tools](https://github.com/naviapps/sdk-tooling/blob/main/docs/REFERENCE.md#quality-and-documentation-checks),
-[native receipt mechanisms](https://github.com/naviapps/sdk-tooling/blob/main/docs/REFERENCE.md#native-artifacts-and-provenance)
-and [consumer isolation](https://github.com/naviapps/sdk-tooling/blob/main/docs/REFERENCE.md#consumer-verification).
+The fetch prepares the Cargo cache for locked offline Rust checks. Formatting,
+framework verification and standalone consumer checks run from this checkout.
 Ordinary SwiftPM/C/NuGet consumers do not need developer setup.
 
 Use `mise exec -- make <target>` so pinned tools remain available in temporary clients.
@@ -281,14 +277,13 @@ mise exec -- python3 -B tools/pack-dotnet.py --runtime osx-arm64 --runtime osx-x
 mise exec -- python3 -B tools/test-package.py .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
-The SDK owns `bindings/dotnet/tests/PackageConsumer/Program.cs`; the shared driver owns
-provenance/byte checks and isolated restore. `--package-source <directory>` selects a
+The package fixture in `bindings/dotnet/tests/PackageConsumer/Program.cs` runs after
+receipt and byte checks in an isolated restore. `--package-source <directory>` selects a
 private/local feed; `test-package.py --dependency <nupkg>` adds dependencies to its empty
 feed. No feed is published. Cross-OS packing checks provenance, while Mach-O/signature
 inspection must happen on macOS. Loading a macOS package does not verify Windows.
-DesktopActions resolves its WindowManagement dependency by its pinned commit. Use the
-tooling revision that produced the selected native receipts when packing. A combined
-package requires one tooling revision that verifies every selected receipt.
+DesktopActions resolves its WindowManagement dependency by its pinned commit.
+Each selected runtime's receipt must verify against this checkout before packing.
 
 ### Owned platform acceptance
 
@@ -302,15 +297,15 @@ commit/fingerprint variables retained, run
 `mise exec -- swift test --filter OwnedWindowListRuntimeTests`. The fixture records
 whether WindowServer lists the transparent window and changes no permissions/settings.
 
-On an owned Windows 11 ARM64 worker, use native ARM64 Python, Rust and MSVC, the
-`x86_64-pc-windows-msvc` Rust standard library and the x64 .NET SDK pinned in `mise.toml`.
-Set `DOTNET_BIN` to the absolute x64 executable. Select a locally prepared SDK Tooling
-checkout at its exact reviewed commit for the ARM64-hosted build and fixtures:
+On an owned Windows 11 worker, use Python, Rust and MSVC matching the worker's
+architecture, the `x86_64-pc-windows-msvc` Rust standard library and the x64 .NET SDK
+pinned in `mise.toml`. Set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64
+builds x64 artifacts and runs the x64 fixtures through Windows emulation:
 
 ```powershell
-python -B tools/check-windows.py --desktop --tooling-source $tooling --tooling-revision $commit
-python -B tools/pack-dotnet.py --runtime win-x64 --tooling-source $tooling --tooling-revision $commit
-python -B tools/test-package.py .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg --tooling-source $tooling --tooling-revision $commit
+python -B tools/check-windows.py --desktop
+python -B tools/pack-dotnet.py --runtime win-x64
+python -B tools/test-package.py .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
 The Windows x64 gate checks PE architecture, exports, CRT linkage, Rust and C fixtures,

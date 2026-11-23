@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Use pinned tooling with this SDK's existing fixture and native layout."""
+"""Compile and run this SDK's C ABI fixture against its native library."""
 
-from _tooling import load, verify_candidate
+from _tooling import load
 from _windows import consumer_options
 from native import builder
 
@@ -21,7 +21,6 @@ def main(argv=None):
         work_parent=root / ".native-build",
         argv=options,
     )
-    verify_candidate()
     print(root.name + " C ABI fixture passed.")
 
 
