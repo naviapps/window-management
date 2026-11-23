@@ -3,7 +3,7 @@ SWIFT_STRICT_FLAGS := -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-a
 
 .DEFAULT_GOAL := check
 
-.PHONY: check check-source test-managed check-distribution build build-release format lint test test-consumer test-installed-consumers native native-verify test-rust test-docs test-dotnet test-c test-distribution-tools
+.PHONY: check check-source test-managed check-distribution build build-release clean format lint test test-consumer test-installed-consumers native native-verify test-rust test-docs test-dotnet test-c test-distribution-tools
 
 check: check-source test test-consumer
 
@@ -16,6 +16,12 @@ build:
 
 build-release:
 	swift build -c release $(SWIFT_STRICT_FLAGS)
+
+clean:
+	$(SDK_TOOLING) clean .build target .native-build fixtures/consumers/swift/.build \
+	  fixtures/acceptance/windows/host/bin fixtures/acceptance/windows/host/obj \
+	  bindings/dotnet/src/NaviApps.WindowManagement/bin bindings/dotnet/src/NaviApps.WindowManagement/obj \
+	  bindings/dotnet/tests/NaviApps.WindowManagement.Tests/bin bindings/dotnet/tests/NaviApps.WindowManagement.Tests/obj
 
 format:
 	mise run format
