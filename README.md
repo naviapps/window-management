@@ -20,11 +20,11 @@ its full commit ID. Select `WindowManagement` for values/codecs or
 `WindowManagementMacOS` for native macOS control. The tracked XCFramework needs no
 Rust build on the consumer's machine.
 
-For example, a Swift 6.4 client on macOS 26 can use this complete manifest. Replace
+For example, a Swift 6.3 client on macOS 26 can use this complete manifest. Replace
 `FULL_40_CHARACTER_PUBLISHED_COMMIT_ID` with the chosen published SDK revision:
 
 ```swift
-// swift-tools-version: 6.4
+// swift-tools-version: 6.3
 import PackageDescription
 
 let package = Package(
@@ -212,8 +212,8 @@ policy through pinned shared mechanisms.
 
 ### Setup and checks
 
-Run commands from the SDK root. Swift development requires Swift 6.4/Xcode on macOS 26
-or newer. Review `mise.toml`, `rust-toolchain.toml` and `tools/tooling-sources.json`
+Run commands from the SDK root. Swift development requires Swift 6.3 or later
+on macOS 26 or later. Review `mise.toml`, `rust-toolchain.toml` and `tools/tooling-sources.json`
 before installing their pinned Python 3.15.1, Rust 1.99.1, .NET 10 and static tools:
 
 ```sh
@@ -292,8 +292,8 @@ package requires one tooling revision that verifies every selected receipt.
 
 ### Owned platform acceptance
 
-The GitHub-hosted Xcode 27 workflow runs Rust and strict Swift tests against the
-tracked framework and verifies standalone Swift, Rust, C and .NET consumers.
+GitHub Actions runs strict Swift tests against the tracked framework on macOS 26
+with Xcode 26.6. The Xcode 27 job also verifies Rust, Swift, C and .NET consumers.
 In an owned ephemeral VM, `OwnedWindowListRuntimeTests` covers fixture-owned windows,
 ordering, transparent-front-window hits and reads after closure. With
 `WINDOW_MANAGEMENT_RUN_OWNED_CG_TESTS=1`, `NAVI_CI_OWNED_VM=1` and controller source

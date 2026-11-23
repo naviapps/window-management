@@ -19,14 +19,14 @@ jobs:
       GIT_TERMINAL_PROMPT: "0"
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@v6.1.0
         with:
           persist-credentials: false
           fetch-depth: 0
       - name: Check Swift toolchain
         run: xcrun swift --version
       - name: Install tools for standalone consumers and artifacts
-        uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+        uses: jdx/mise-action@v5.3.0
         with:
           version: "2026.11.12"
           cache: false
@@ -35,3 +35,19 @@ jobs:
         run: mise exec -- cargo fetch --locked
       - name: Validate SDK and consumers
         run: mise exec -- make check test-installed-consumers test-c test-dotnet
+
+  macos-26:
+    name: macOS 26 compatibility
+    runs-on: macos-26
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      GIT_TERMINAL_PROMPT: "0"
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+      - name: Check Swift toolchain
+        run: xcrun swift --version
+      - name: Test Swift compatibility
+        run: xcrun swift test -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
