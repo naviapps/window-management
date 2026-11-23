@@ -23,15 +23,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
     native = ffi_product(root) if set(args.runtime) == {RID} else xcframework(root)
+    nuget = load("nuget")
     selected = {"LICENSE": root / "LICENSE", "README.md": root / "README.md"}
-    selected.update(
-        {
-            "ThirdParty/" + path.relative_to(root / "ThirdParty").as_posix(): path
-            for path in load("artifacts").files(root / "ThirdParty")
-            if path.name not in (".DS_Store", "registry-notices.json")
-        }
-    )
-    package = load("nuget").pack_native(
+    selected.update(nuget.retained_notice_files(root / "ThirdParty", "ThirdParty"))
+    package = nuget.pack_native(
         native,
         project=root
         / "bindings/dotnet/src/NaviApps.WindowManagement/NaviApps.WindowManagement.csproj",

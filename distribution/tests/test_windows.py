@@ -39,25 +39,33 @@ class WindowsToolsTests(unittest.TestCase):
             (("osx-arm64", "osx-x64"), True),
             (("win-x64", "osx-arm64", "osx-x64"), True),
         ):
-            nuget = Mock()
-            modules = {"artifacts": Mock(files=Mock(return_value=())), "nuget": nuget}
+            root = Path(pack.__file__).resolve().parents[1]
+            retained = {"ThirdParty/dependency/NOTICE": root / "ThirdParty/dependency/NOTICE"}
+            nuget = Mock(retained_notice_files=Mock(return_value=retained))
             with (
                 self.subTest(runtimes=runtimes),
                 patch.object(pack, "ffi_product") as product,
                 patch.object(pack, "xcframework") as framework,
-                patch.object(pack, "load", side_effect=modules.__getitem__),
+                patch.object(pack, "load", return_value=nuget),
             ):
                 command = [argument for rid in runtimes for argument in ("--runtime", rid)]
                 pack.main(command)
                 selected, unused = (
                     (framework, product) if requires_framework else (product, framework)
                 )
-                selected.assert_called_once_with(Path(pack.__file__).resolve().parents[1])
+                selected.assert_called_once_with(root)
                 unused.assert_not_called()
+                nuget.retained_notice_files.assert_called_once_with(
+                    root / "ThirdParty", "ThirdParty"
+                )
                 nuget.pack_native.assert_called_once()
                 call_ = nuget.pack_native.call_args
                 self.assertEqual(call_.args, (selected.return_value,))
                 self.assertEqual(call_.kwargs["runtimes"], list(runtimes))
+                self.assertEqual(
+                    call_.kwargs["package_files"],
+                    {"LICENSE": root / "LICENSE", "README.md": root / "README.md"} | retained,
+                )
 
     def test_windows_build_selects_native_tools_for_the_x64_target(self):
         for host in ("x64", "arm64"):
