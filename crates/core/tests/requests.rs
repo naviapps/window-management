@@ -74,6 +74,33 @@ fn requests_share_storage_defaults_and_normalization() {
 }
 
 #[test]
+fn placement_requests_round_trip_canonical_tagged_payloads() {
+    for (placement, screen, area) in [
+        (
+            r#"{"kind":"grid","columns":2,"rows":3,"column":1,"row":2,"columnSpan":1,"rowSpan":1}"#,
+            r#"{"kind":"ordered-index","orderedIndex":2}"#,
+            "full",
+        ),
+        (
+            r#"{"kind":"centered","widthRatio":0.7,"heightRatio":0.5}"#,
+            r#"{"kind":"main"}"#,
+            "visible",
+        ),
+        (
+            r#"{"kind":"fill"}"#,
+            r#"{"kind":"point","x":10.0,"y":20.0}"#,
+            "full",
+        ),
+    ] {
+        let input =
+            format!(r#"{{"placement":{placement},"screen":{screen},"area":"{area}","inset":6.0}}"#);
+        let request = serde_json::from_str::<PlacementRequest>(&input).unwrap();
+        let expected = serde_json::from_str::<serde_json::Value>(&input).unwrap();
+        assert_eq!(serde_json::to_value(request).unwrap(), expected);
+    }
+}
+
+#[test]
 fn placement_request_storage_rejects_invalid_fields() {
     for invalid in [
         // The request has one required field and three non-null optional fields.

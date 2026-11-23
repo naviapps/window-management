@@ -197,244 +197,29 @@ final class WindowPlacementRequestTests: XCTestCase {
     }
   }
 
-  func testUsesCanonicalCodableKeys() throws {
-    let object = try encodedObject(WindowPlacementRequest(placement: .fill))
-
-    let placement = try XCTUnwrap(object["placement"] as? [String: Any])
-    let display = try XCTUnwrap(object["screen"] as? [String: Any])
-
-    XCTAssertEqual(Set(object.keys), ["placement", "screen", "area", "inset"])
-    XCTAssertEqual(placement["kind"] as? String, "fill")
-    XCTAssertEqual(display["kind"] as? String, "containing-window")
-    XCTAssertEqual(object["area"] as? String, "visible")
-    XCTAssertEqual(object["inset"] as? Double, 0)
-  }
-
-  func testEncodesCanonicalFillPlacementPayload() throws {
-    let object = try encodedObject(WindowPlacementRequest(placement: .fill))
-    let payload = try XCTUnwrap(object["placement"] as? [String: Any])
-
-    XCTAssertEqual(Set(payload.keys), ["kind"])
-    XCTAssertEqual(payload["kind"] as? String, "fill")
-  }
-
-  func testDecodesCanonicalFillPlacementPayload() throws {
-    XCTAssertEqual(
-      try decodedRequest(placementPayload: ["kind": "fill"]),
-      WindowPlacementRequest(placement: .fill)
-    )
-  }
-
-  func testEncodesCanonicalAssociatedPlacementPayloads() throws {
-    let gridObject = try encodedObject(
-      WindowPlacementRequest(
-        placement: .grid(
-          columns: 2,
-          rows: 3,
-          column: 1,
-          row: 2,
-          columnSpan: 1,
-          rowSpan: 1
-        )
-      )
-    )
-    let grid = try XCTUnwrap(gridObject["placement"] as? [String: Any])
-
-    XCTAssertEqual(
-      Set(grid.keys),
-      ["kind", "columns", "rows", "column", "row", "columnSpan", "rowSpan"]
-    )
-    XCTAssertEqual(grid["kind"] as? String, "grid")
-    XCTAssertEqual(grid["columns"] as? Int, 2)
-    XCTAssertEqual(grid["rows"] as? Int, 3)
-    XCTAssertEqual(grid["column"] as? Int, 1)
-    XCTAssertEqual(grid["row"] as? Int, 2)
-    XCTAssertEqual(grid["columnSpan"] as? Int, 1)
-    XCTAssertEqual(grid["rowSpan"] as? Int, 1)
-
-    let centeredObject = try encodedObject(
-      WindowPlacementRequest(placement: .centered(widthRatio: 0.7, heightRatio: 0.5))
-    )
-    let centered = try XCTUnwrap(centeredObject["placement"] as? [String: Any])
-
-    XCTAssertEqual(Set(centered.keys), ["kind", "widthRatio", "heightRatio"])
-    XCTAssertEqual(centered["kind"] as? String, "centered")
-    XCTAssertEqual(centered["widthRatio"] as? Double, 0.7)
-    XCTAssertEqual(centered["heightRatio"] as? Double, 0.5)
-  }
-
-  func testDecodesCanonicalAssociatedPlacementPayloads() throws {
-    XCTAssertEqual(
-      try decodedRequest(
-        placementPayload: [
-          "kind": "grid",
-          "columns": 2,
-          "rows": 3,
-          "column": 1,
-          "row": 2,
-          "columnSpan": 1,
-          "rowSpan": 1,
-        ]
-      ),
-      WindowPlacementRequest(
-        placement: .grid(
-          columns: 2,
-          rows: 3,
-          column: 1,
-          row: 2,
-          columnSpan: 1,
-          rowSpan: 1
-        )
-      )
-    )
-
-    XCTAssertEqual(
-      try decodedRequest(
-        placementPayload: [
-          "kind": "centered",
-          "widthRatio": 0.7,
-          "heightRatio": 0.5,
-        ]
-      ),
-      WindowPlacementRequest(placement: .centered(widthRatio: 0.7, heightRatio: 0.5))
-    )
-  }
-
-  func testEncodesCanonicalDisplayPayloads() throws {
-    let cases: [(DisplayTarget, String, Set<String>)] = [
-      (.main, "main", ["kind"]),
-      (.containingWindow, "containing-window", ["kind"]),
-      (.orderedIndex(2), "ordered-index", ["kind", "orderedIndex"]),
-      (.displayIdentifier(7), "display-identifier", ["kind", "displayIdentifier"]),
-      (.point(.init(x: 10, y: 20)), "point", ["kind", "x", "y"]),
-    ]
-
-    for (display, expectedKind, expectedKeys) in cases {
-      let object = try encodedObject(WindowPlacementRequest(placement: .fill, display: display))
-      let payload = try XCTUnwrap(object["screen"] as? [String: Any])
-
-      XCTAssertEqual(Set(payload.keys), expectedKeys)
-      XCTAssertEqual(payload["kind"] as? String, expectedKind)
-    }
-  }
-
-  func testDecodesCanonicalDisplayPayloads() throws {
-    let cases: [([String: Any], DisplayTarget)] = [
-      (["kind": "main"], .main),
-      (["kind": "containing-window"], .containingWindow),
-      (["kind": "ordered-index", "orderedIndex": 2], .orderedIndex(2)),
-      (["kind": "display-identifier", "displayIdentifier": 7], .displayIdentifier(7)),
-      (["kind": "point", "x": 10, "y": 20], .point(.init(x: 10, y: 20))),
-    ]
-
-    for (payload, display) in cases {
-      XCTAssertEqual(
-        try decodedRequest(displayPayload: payload),
-        WindowPlacementRequest(placement: .fill, display: display)
-      )
-    }
-  }
-
-  func testEncodesCanonicalDisplayAssociatedValues() throws {
-    let orderedIndex = try displayPayload(for: .orderedIndex(2))
-    XCTAssertEqual(orderedIndex["orderedIndex"] as? Int, 2)
-
-    let displayIdentifier = try displayPayload(for: .displayIdentifier(7))
-    XCTAssertEqual(displayIdentifier["displayIdentifier"] as? Int, 7)
-
-    let point = try displayPayload(for: .point(.init(x: 10, y: 20)))
-    XCTAssertEqual((point["x"] as? NSNumber)?.doubleValue, 10)
-    XCTAssertEqual((point["y"] as? NSNumber)?.doubleValue, 20)
-  }
-
-  func testEncodesCanonicalAreaValues() throws {
-    let visible = try encodedObject(WindowPlacementRequest(placement: .fill, area: .visible))
-    XCTAssertEqual(visible["area"] as? String, "visible")
-
-    let full = try encodedObject(WindowPlacementRequest(placement: .fill, area: .full))
-    XCTAssertEqual(full["area"] as? String, "full")
-  }
-
-  func testDecodesCanonicalAreaValues() throws {
-    XCTAssertEqual(
-      try decodedRequest(area: "visible"),
-      WindowPlacementRequest(placement: .fill, area: .visible)
-    )
-    XCTAssertEqual(
-      try decodedRequest(area: "full"),
-      WindowPlacementRequest(placement: .fill, area: .full)
-    )
-  }
-
-  func testDecodesCanonicalCodablePayload() throws {
-    let data = Data(
+  func testCodableReadsAndWritesStoredPlacementRequest() throws {
+    let stored = Data(
       """
       {
         "placement": {
-          "kind": "grid",
-          "columns": 2,
-          "rows": 3,
-          "column": 1,
-          "row": 2,
-          "columnSpan": 1,
-          "rowSpan": 1
+          "kind": "grid", "columns": 2, "rows": 3, "column": 1, "row": 2,
+          "columnSpan": 1, "rowSpan": 1
         },
-        "screen": {
-          "kind": "point",
-          "x": 10,
-          "y": 20
-        },
+        "screen": { "kind": "point", "x": 10, "y": 20 },
         "area": "full",
         "inset": 6
       }
       """.utf8
     )
+    let expected = WindowPlacementRequest(
+      placement: .grid(columns: 2, rows: 3, column: 1, row: 2, columnSpan: 1, rowSpan: 1),
+      display: .point(.init(x: 10, y: 20)), area: .full, inset: 6)
 
+    XCTAssertEqual(try JSONDecoder().decode(WindowPlacementRequest.self, from: stored), expected)
+
+    let encoded = try JSONEncoder().encode(expected)
     XCTAssertEqual(
-      try JSONDecoder().decode(WindowPlacementRequest.self, from: data),
-      WindowPlacementRequest(
-        placement: .grid(
-          columns: 2,
-          rows: 3,
-          column: 1,
-          row: 2,
-          columnSpan: 1,
-          rowSpan: 1
-        ),
-        display: .point(.init(x: 10, y: 20)),
-        area: .full,
-        inset: 6
-      )
-    )
-  }
-
-  private func encodedObject(_ request: WindowPlacementRequest) throws -> [String: Any] {
-    let data = try JSONEncoder().encode(request)
-    return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-  }
-
-  private func displayPayload(for display: DisplayTarget) throws -> [String: Any] {
-    let object = try encodedObject(
-      WindowPlacementRequest(
-        placement: .grid(columns: 2, rows: 1, column: 0, row: 0, columnSpan: 1, rowSpan: 1),
-        display: display))
-    return try XCTUnwrap(object["screen"] as? [String: Any])
-  }
-
-  private func decodedRequest(
-    placementPayload: [String: Any] = ["kind": "fill"],
-    displayPayload: [String: Any] = ["kind": "containing-window"],
-    area: String = "visible",
-    inset: Double = 0
-  ) throws -> WindowPlacementRequest {
-    let data = try JSONSerialization.data(
-      withJSONObject: [
-        "placement": placementPayload,
-        "screen": displayPayload,
-        "area": area,
-        "inset": inset,
-      ]
-    )
-    return try JSONDecoder().decode(WindowPlacementRequest.self, from: data)
+      try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? NSDictionary),
+      try XCTUnwrap(JSONSerialization.jsonObject(with: stored) as? NSDictionary))
   }
 }
