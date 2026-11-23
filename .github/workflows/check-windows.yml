@@ -38,24 +38,6 @@ jobs:
       - name: Run Windows x64 tooling fixtures
         run: python -E -S -B -m unittest discover -s tools/tests
       - name: Build the x64 DLL and validate C, .NET and installed NuGet consumers
-        shell: python
-        run: |
-          import json, os, shutil, subprocess, sys
-          from pathlib import Path
-
-          temp = Path(os.environ['RUNNER_TEMP'])
-          tooling = temp / 'sdk-tooling'
-          revision = json.loads(Path('tools/tooling-sources.json').read_text(encoding='utf-8'))['naviapps/sdk-tooling']
-          subprocess.run(['git', 'init', '--quiet', tooling], check=True)
-          subprocess.run([
-              'git', '-C', tooling, '-c', 'credential.helper=', 'fetch', '--depth=1',
-              'https://github.com/naviapps/sdk-tooling.git', revision,
-          ], check=True)
-          subprocess.run(['git', '-C', tooling, 'checkout', '--quiet', '--detach', 'FETCH_HEAD'], check=True)
-          dotnet = shutil.which('dotnet.exe')
-          if not dotnet:
-              raise SystemExit('The pinned x64 .NET SDK was not installed.')
-          subprocess.run([
-              sys.executable, '-E', '-S', '-B', 'tools/check-ci.py', '--skip-desktop',
-              '--tooling-source', tooling, '--tooling-revision', revision,
-          ], env=dict(os.environ, DOTNET_BIN=dotnet, NAVI_CI_ARTIFACTS=str(temp / 'sdk-acceptance')), check=True)
+        env:
+          NAVI_SDK_TOOLING_CACHE: ${{ runner.temp }}/sdk-tooling
+        run: python -E -S -B tools/_tooling.py tools/check-ci.py --skip-desktop
