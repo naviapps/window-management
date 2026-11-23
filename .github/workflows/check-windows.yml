@@ -15,23 +15,13 @@ jobs:
     name: Test Rust and .NET
     runs-on: windows-2025
     timeout-minutes: 30
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-      DOTNET_CLI_USE_MSBUILD_SERVER: "0"
-      MSBUILDDISABLENODEREUSE: "1"
-      GIT_TERMINAL_PROMPT: "0"
-      CARGO_BUILD_TARGET: "x86_64-pc-windows-msvc"
     steps:
       - uses: actions/checkout@v6.1.0
         with:
           persist-credentials: false
-      - uses: naviapps/sdk-tooling/.github/actions/test-rust-windows@888bf13f109ac7dc806b29478cc9c4acacdf6515
-      - uses: actions/setup-dotnet@v6.0.0
-        env:
-          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+      - uses: naviapps/sdk-tooling/.github/actions/test-rust-windows@main
         with:
-          dotnet-version: "10.0.403"
-          architecture: x64
+          dotnet: "true"
       - name: Build native binding library
         run: cargo build --locked -p window-management-ffi
       - name: Test .NET bindings

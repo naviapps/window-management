@@ -12,6 +12,8 @@ from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import Mock, call, patch
 
+from sdk_tooling import windows_delivery
+
 windows = importlib.import_module("distribution.windows_target")
 build = importlib.import_module("distribution.verify_windows_native")
 pack = importlib.import_module("distribution.pack_nuget")
@@ -65,7 +67,7 @@ class WindowsToolsTests(unittest.TestCase):
             ):
                 root = Path(directory).resolve()
                 (root / "mise.toml").write_text('[tools]\ndotnet = "10.0.403"\n')
-                backend = Mock()
+                backend = Mock(MSVC_TARGETS=windows_delivery.windows.MSVC_TARGETS)
                 backend.host_architecture.return_value = host
                 compiler, dotnet = root / "msvc", str(root / "dotnet.exe")
                 environment = {}
@@ -77,8 +79,11 @@ class WindowsToolsTests(unittest.TestCase):
                     patch.object(build, "load", return_value=backend),
                     patch.object(build, "support_inputs", return_value={}),
                     patch.object(build, "ffi_product", return_value=native),
-                    patch.object(build.subprocess, "check_output", return_value="10.0.403\n"),
-                    patch.object(build.subprocess, "run") as run,
+                    patch.object(windows_delivery, "windows", backend),
+                    patch.object(
+                        windows_delivery.subprocess, "check_output", return_value="10.0.403\n"
+                    ),
+                    patch.object(windows_delivery.subprocess, "run") as run,
                     patch("builtins.print"),
                 ):
                     build.main(root=root, argv=["--build-only"])

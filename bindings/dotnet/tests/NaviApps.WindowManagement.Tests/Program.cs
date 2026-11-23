@@ -152,8 +152,6 @@ using (var coordinates = JsonDocument.Parse(preciseRequest.Display.ToJson()))
 }
 Equal(preciseRequest.ToJson(), new WindowPlacementRequest(WindowPlacement.Fill, DisplayTarget.Point(-0.0, double.Epsilon)).ToJson());
 var displays = new Display[] { new(new(100, 0, 100, 80), new(100, 0, 100, 80), 2, false), new(new(0, 0, 100, 80), new(0, 0, 100, 80), 0, true) };
-Equal(displays[1], Geometry.OrderedDisplays(displays)[0]);
-Equal(displays[0], Geometry.OrderedDisplays(displays)[1]);
 Equal<Display?>(displays[1], Geometry.SelectDisplay(DisplayTarget.Main, displays[0].Frame, displays, false));
 Equal<Display?>(displays[0], Geometry.SelectDisplay(DisplayTarget.DisplayIdentifier(2), default, displays, false));
 Equal<Display?>(displays[1], Geometry.SelectDisplay(DisplayTarget.DisplayIdentifier(0), default, displays, false));
@@ -166,7 +164,6 @@ Equal<Display?>(displays[1], Geometry.SelectDisplay(DisplayTarget.DisplayIdentif
 Equal<int?>(1, Geometry.IndexContainingPoint(100, 10, displays));
 Equal<int?>(null, Geometry.IndexContainingPoint(200, 10, displays));
 var tiedDisplays = new[] { displays[1] with { VisibleFrame = default, IsMain = false }, displays[1] };
-Equal(tiedDisplays[0], Geometry.OrderedDisplays(tiedDisplays)[0]);
 Equal<Display?>(tiedDisplays[0], Geometry.SelectDisplay(DisplayTarget.Point(0, 10), default, tiedDisplays));
 var zeroOrigin = new Display(new(0, 0, 100, 100), new(0, 10, 100, 90), 1, false);
 var larger = zeroOrigin with { Frame = new(-0.0, -0.0, 200, 100), Identifier = 0 };

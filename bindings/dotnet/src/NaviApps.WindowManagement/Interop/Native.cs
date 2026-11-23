@@ -1,5 +1,7 @@
-using System.Reflection;
 using System.Runtime.InteropServices;
+
+[assembly: DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.System32)]
+
 namespace NaviApps.WindowManagement;
 
 [StructLayout(LayoutKind.Sequential)]
@@ -26,17 +28,6 @@ internal struct NativeDisplay
 internal static unsafe partial class Native
 {
     private const string Library = "window_management_ffi";
-    static Native()
-    {
-        if (OperatingSystem.IsWindows()) NativeLibrary.SetDllImportResolver(typeof(Native).Assembly, Resolve);
-    }
-    private static nint Resolve(string name, Assembly assembly, DllImportSearchPath? search)
-    {
-        if (name != Library) return 0;
-        var directories = (AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") as string ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries).Append(Path.GetDirectoryName(assembly.Location)!).Append(Environment.SystemDirectory);
-        foreach (var directory in directories) if (!string.IsNullOrEmpty(directory) && NativeLibrary.TryLoad(Path.Combine(directory, Library + ".dll"), out var handle)) return handle;
-        throw new DllNotFoundException("Place the native WindowManagement library beside its assembly or install a native runtime asset.");
-    }
     internal static void EnsureAbi() { if (Version() != 5) throw new InvalidOperationException("Unsupported native window ABI."); }
     [DllImport(Library, EntryPoint = "window_management_abi_version")] private static extern uint Version();
     [DllImport(Library, EntryPoint = "window_management_rect_normalize")] internal static extern Rect Normalize(Rect value);

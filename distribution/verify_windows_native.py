@@ -2,15 +2,13 @@
 """Build and check the Windows x64 SDK and optionally an owned desktop fixture."""
 
 import argparse
-import os
 import shutil
-import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
 from sdk_tooling.adapters import load, support_inputs
 from sdk_tooling.native_plan import ffi_product
+from sdk_tooling.windows_delivery import X64Acceptance
 
 from distribution.windows_target import RID, TARGET
 
@@ -40,21 +38,15 @@ def main(root=None, argv=None):
     inputs = support_inputs(root)
     native = ffi_product(root)
     windows = load("windows")
-    environment = {
-        key.upper(): value for key, value in os.environ.items() if key.upper() != "DOTNET_HOST_PATH"
-    }
-    host = windows.host_architecture()
-    env, tools, dotnet = windows.native_environment(host, environment, target_architecture="x64")
-    version = subprocess.check_output([dotnet, "--version"], cwd=root, env=env, text=True).strip()
-    if version != tomllib.loads((root / "mise.toml").read_text())["tools"]["dotnet"]:
-        raise SystemExit("Use the pinned x64 .NET SDK from mise.toml")
+    acceptance = X64Acceptance(root)
+    env, host, dotnet = acceptance.env, acceptance.host, acceptance.dotnet
     env["DOTNET_BIN"] = dotnet
 
     def run(command):
-        subprocess.run([str(v) for v in command], cwd=root, env=env, check=True)
+        acceptance.run(*command)
 
     run(["cargo", "fetch", "--locked", "--target", TARGET])
-    destination = windows.build_library(native, env, tools, "x64", native_host=host)
+    destination = windows.build_library(native, env, acceptance.tools, "x64", native_host=host)
     if inputs != support_inputs(root):
         raise ValueError("Build support changed during the Windows x64 build")
     if args.build_only:

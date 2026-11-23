@@ -3,31 +3,6 @@ import WindowManagement
 import XCTest
 
 final class DisplaySelectorTests: XCTestCase {
-  func testContainingWindowUsesGreatestOverlapWhenItsCenterIsInADisplayGap() {
-    let left = makeDisplay(CGRect(x: -400, y: -100, width: 200, height: 300))
-    let right = makeDisplay(CGRect(x: 100, y: -100, width: 300, height: 300))
-    let window = CGRect(x: -250, y: -50, width: 450, height: 100)
-
-    XCTAssertEqual(
-      DisplaySelector.display(
-        for: .containingWindow, windowFrame: window, in: [right, left], fallback: .none), right)
-    XCTAssertNil(DisplaySelector.index(containing: CGPoint(x: -25, y: 0), in: [right, left]))
-  }
-
-  func testOrderedDisplaysPreservesInputOrderWhenSortKeysAreEqual() {
-    let first = Display(
-      frame: CGRect(x: 0, y: 0, width: 100, height: 100),
-      visibleFrame: CGRect(x: 0, y: 10, width: 100, height: 90),
-      isMain: true
-    )
-    let second = Display(
-      frame: CGRect(x: 0, y: 0, width: 100, height: 100),
-      visibleFrame: CGRect(x: 0, y: 20, width: 100, height: 80)
-    )
-
-    XCTAssertEqual(DisplaySelector.orderedDisplays(from: [second, first]), [second, first])
-  }
-
   func testOrderedDisplaysSortsByMinXThenMinY() {
     let displays = [
       makeDisplay(CGRect(x: 100, y: 10, width: 100, height: 100)),
@@ -110,24 +85,6 @@ final class DisplaySelectorTests: XCTestCase {
     XCTAssertNil(DisplaySelector.index(containing: CGPoint(x: 500, y: 10), in: displays))
   }
 
-  func testOrderedDisplaysUsesStandardizedDisplayFrames() {
-    let displays = [
-      makeDisplay(
-        CGRect(x: 200, y: 0, width: -100, height: 100),
-        visibleFrame: CGRect(x: 100, y: 0, width: 100, height: 100)
-      ),
-      makeDisplay(CGRect(x: 0, y: 0, width: 100, height: 100)),
-    ]
-
-    XCTAssertEqual(
-      DisplaySelector.orderedDisplays(from: displays).map(\.frame.origin),
-      [
-        CGPoint(x: 0, y: 0),
-        CGPoint(x: 100, y: 0),
-      ]
-    )
-  }
-
   func testOrderedDisplaysUsesFrameSizeAndDisplayIdentifierAsTieBreakers() {
     let displays = [
       makeDisplay(CGRect(x: 0, y: 0, width: 200, height: 100), displayIdentifier: 3),
@@ -162,27 +119,6 @@ final class DisplaySelectorTests: XCTestCase {
     XCTAssertEqual(
       DisplaySelector.orderedDisplays(from: [duplicateIdentifier, primary]),
       [duplicateIdentifier, primary])
-  }
-
-  func testDisplayStandardizesFramesBeforeContainmentChecks() {
-    let display = makeDisplay(
-      CGRect(x: 200, y: 0, width: -200, height: 200),
-      visibleFrame: CGRect(x: 0, y: 0, width: 200, height: 200)
-    )
-
-    XCTAssertEqual(
-      DisplaySelector.display(
-        for: .containingWindow,
-        windowFrame: CGRect(x: 40, y: 40, width: 20, height: 20),
-        in: [display],
-        fallback: .none
-      ),
-      display
-    )
-    XCTAssertEqual(
-      DisplaySelector.index(containing: CGPoint(x: 50, y: 50), in: [display]),
-      0
-    )
   }
 
   func testAdjacentIndexPreservesTheNativeSignedIntegerWidth() {

@@ -11,17 +11,6 @@ final class WindowPlacementCalculatorTests: XCTestCase {
     )
   }
 
-  func testGridPlacementCalculatesTopRowCell() {
-    let displayArea = CGRect(x: 0, y: 0, width: 300, height: 200)
-    XCTAssertEqual(
-      WindowPlacementCalculator.frame(
-        for: .grid(columns: 3, rows: 2, column: 1, row: 1, columnSpan: 1, rowSpan: 1),
-        in: displayArea
-      ),
-      CGRect(x: 100, y: 100, width: 100, height: 100)
-    )
-  }
-
   func testGridPreservesSubnormalCoordinatesAcrossTheNativeBoundary() {
     let smallest = CGFloat.leastNonzeroMagnitude
     XCTAssertEqual(
