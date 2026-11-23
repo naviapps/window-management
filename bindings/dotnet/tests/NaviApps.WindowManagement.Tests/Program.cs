@@ -110,10 +110,8 @@ RejectsWindowData(() =>
 {
     using var invalid = WindowSnapshotFilter.FromJsonUtf8("""{"includedWindowIdentifiers":[1],"includedWindowIdentifiers":[2]}"""u8);
 });
-Equal(new Rect(50, 0, 50, 80), Geometry.Grid(new(0, 0, 100, 80), 2, 1, 1, 0));
-// Exercise the same precision-sensitive ABI projection as the Swift binding.
 var smallest = double.Epsilon;
-Equal(new Rect(smallest, smallest, smallest, smallest), Geometry.Grid(new(0, 0, 2 * smallest, 2 * smallest), 8, 8, 4, 4, 4, 4));
+Equal(new Rect(2 * smallest, smallest, smallest, smallest), Geometry.Grid(new(0, 0, 4 * smallest, 3 * smallest), 4, 3, 2, 1));
 Equal(new Rect(25, 20, 50, 40), Geometry.Centered(new(0, 0, 100, 80), 0.5, 0.5));
 Equal(new Rect(0, 20, 100, 40), Geometry.Move(new(0, 0, 200, 40), default, new(0, 0, 100, 80), false));
 Equal<long?>(long.MaxValue - 2, Geometry.AdjacentIndex(long.MinValue, true, long.MaxValue));

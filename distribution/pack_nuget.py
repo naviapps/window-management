@@ -17,6 +17,9 @@ def main(argv=None):
         "--runtime", action="append", required=True, choices=("osx-arm64", "osx-x64", RID)
     )
     parser.add_argument("--package-source", action="append", default=[])
+    parser.add_argument(
+        "--result", type=Path, help="Write the accepted package filename to a new file"
+    )
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
     native = ffi_product(root) if set(args.runtime) == {RID} else xcframework(root)
@@ -28,7 +31,7 @@ def main(argv=None):
             if path.name not in (".DS_Store", "registry-notices.json")
         }
     )
-    load("nuget").pack_native(
+    package = load("nuget").pack_native(
         native,
         project=root
         / "bindings/dotnet/src/NaviApps.WindowManagement/NaviApps.WindowManagement.csproj",
@@ -42,6 +45,9 @@ def main(argv=None):
         runtimes=args.runtime,
         sources=args.package_source,
     )
+    if args.result is not None:
+        with args.result.open("x", encoding="utf-8") as output:
+            output.write(package.name)
 
 
 if __name__ == "__main__":

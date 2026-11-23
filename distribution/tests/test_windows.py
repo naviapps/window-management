@@ -98,7 +98,7 @@ class WindowsToolsTests(unittest.TestCase):
                 self.assertEqual(environment["DOTNET_BIN"], dotnet)
                 self.assertEqual(
                     run.call_args.args[0],
-                    ["cargo", "fetch", "--locked", "--target", windows.TARGET],
+                    list(windows_delivery.locked_fetch_args()),
                 )
 
     def test_hosted_evidence_contains_only_the_installed_x64_package(self):

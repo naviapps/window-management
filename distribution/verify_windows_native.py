@@ -8,7 +8,7 @@ from pathlib import Path
 
 from sdk_tooling.adapters import load, support_inputs
 from sdk_tooling.native_plan import ffi_product
-from sdk_tooling.windows_delivery import X64Acceptance
+from sdk_tooling.windows_delivery import X64Acceptance, locked_fetch_args
 
 from distribution.windows_target import RID, TARGET
 
@@ -45,7 +45,7 @@ def main(root=None, argv=None):
     def run(command):
         acceptance.run(*command)
 
-    run(["cargo", "fetch", "--locked", "--target", TARGET])
+    run(locked_fetch_args())
     destination = windows.build_library(native, env, acceptance.tools, "x64", native_host=host)
     if inputs != support_inputs(root):
         raise ValueError("Build support changed during the Windows x64 build")

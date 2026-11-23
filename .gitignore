@@ -6,7 +6,6 @@
 .env.*
 !.env.example
 Package.resolved
-*.doccarchive
 DerivedData/
 xcuserdata/
 *.xcodeproj

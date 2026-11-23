@@ -24,3 +24,6 @@ commands = [
     "--skip-desktop",
   ],
 ]
+
+[nuget]
+pack = "distribution/pack_nuget.py"

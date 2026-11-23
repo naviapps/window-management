@@ -1,4 +1,4 @@
-# ``WindowManagement``
+# Swift window values, geometry and requests
 
 Swift window values and provider contracts, backed by the Rust geometry and request engine
 shared with the Windows adapter.
@@ -28,11 +28,11 @@ uses the same Rust geometry, with minimum edges included and maximum edges exclu
 Numeric filter sets use `Int64` process identifiers and `UInt64` window identifiers.
 Swift callers passing native `pid_t` or `CGWindowID` values to filter initializers
 convert them with `Int64(process)` or `UInt64(window)` when forming the sets.
-Use ``WindowSnapshotFilter/init(jsonData:)`` for strict original-byte JSON, shared
+Use `WindowSnapshotFilter.init(jsonData:)` for strict original-byte JSON, shared
 defaults and strict field checks. .NET accepts the corresponding input through
 `WindowSnapshotFilter.FromJsonUtf8`. Application IDs are opaque and Rust matches their
 exact scalar spelling. Swift property sets use Swift's canonical string equality;
-``WindowSnapshotFilter/jsonData`` and Codable preserve all distinct spellings from JSON.
+`WindowSnapshotFilter.jsonData` and Codable preserve all distinct spellings from JSON.
 Invalid UTF-8 and malformed .NET UTF-16 identifiers are rejected.
 Both Swift properties and canonical JSON use
 `includedOwnerApplicationIdentifiers` and `excludedOwnerApplicationIdentifiers`.
@@ -40,7 +40,7 @@ Hosts must rename saved `includedOwnerBundleIdentifiers` / `excludedOwnerBundleI
 keys before decoding, preserving their opaque identifier arrays and any unresolved input.
 Legacy keys are rejected without aliases; native identifiers belong to their OS.
 
-``DisplayTarget/containingWindow`` selects the display with the greatest positive
+`DisplayTarget.containingWindow` selects the display with the greatest positive
 intersection with the normalized window frame. Equal areas prefer center containment,
 then stable display order; zero-width or zero-height windows use center containment.
 This shared rule also determines the source for adjacent-display moves, including
@@ -94,12 +94,12 @@ They report a captured snapshot, an unavailable source, or no matching window.
 
 ## Requests and JSON
 
-``WindowPlacementRequest`` and ``WindowMoveRequest`` share Rust validation and normalization
+`WindowPlacementRequest` and `WindowMoveRequest` share Rust validation and normalization
 with .NET `FromJson` / `ToJson`, `Geometry.ResolvePlacement` and `ResolveMovement`.
 Native placers accept those same requests. Normalize direct Rust values before
 serialization; executable geometry always clamps them.
 
-``WindowRequestCodec`` and .NET placement and movement `FromJsonUtf8` methods send original
+`WindowRequestCodec` and .NET placement and movement `FromJsonUtf8` methods send original
 bytes to Rust before a language decoder can consume duplicate keys. Rust writes both languages'
 normalized request JSON and rejects duplicates, unknown fields and explicit nulls. Omitted display,
 area and inset default to containing-window, visible area and zero. The stored placement
@@ -116,80 +116,3 @@ Action SDKs consume these request types directly rather than maintaining paralle
 WindowManagement does not request permissions, install event monitors, persist rules,
 run shortcuts, own user interface, collect analytics, transmit data, or store
 window history. Those responsibilities stay in the host app.
-
-## Topics
-
-### Querying
-
-- ``WindowSnapshotProviding``
-- ``WindowSnapshotResolving``
-- ``WindowSnapshotFilter``
-- ``WindowSnapshotFilter/init(includedOwnerApplicationIdentifiers:includedOwnerProcessIdentifiers:includedWindowIdentifiers:excludedOwnerApplicationIdentifiers:excludedOwnerProcessIdentifiers:excludedWindowIdentifiers:)``
-- ``WindowSnapshotFilter/includes(_:)``
-- ``WindowSnapshotFilter/init(jsonData:)``
-- ``WindowSnapshot/contains(_:)``
-- ``WindowSnapshot``
-- ``WindowSnapshot/init(ownerProcessIdentifier:windowIdentifier:ownerName:ownerBundleIdentifier:title:frame:)``
-
-### Hit Testing
-
-- ``WindowHitTesting``
-- ``WindowHitTesting/hitTest(at:)``
-- ``WindowHitTesting/topmost(at:)``
-- ``WindowHitTestResult``
-- ``WindowHitTestResult/snapshot``
-- ``WindowHitTestResult/missReason``
-- ``WindowHitTestMissReason``
-
-### Placement
-
-- ``WindowPlacement``
-- ``WindowPlacementCalculator``
-- ``WindowPlacementCalculator/frame(for:in:inset:)``
-
-### Requests and Coding
-
-- ``WindowPlacementRequest``
-- ``WindowMoveRequest``
-- ``WindowRequestResolver``
-- ``WindowRequestCodec``
-- ``WindowRequestCodecError``
-
-### Displays
-
-- ``Display``
-- ``Display/init(displayIdentifier:frame:visibleFrame:isMain:)``
-- ``Display/frame(for:)``
-- ``DisplayProviding``
-- ``DisplayProviding/displays()``
-- ``DisplaySelector``
-- ``DisplaySelector/orderedDisplays(from:)``
-- ``DisplaySelector/display(for:windowFrame:in:fallback:)``
-- ``DisplaySelector/index(containing:in:)``
-- ``DisplaySelector/adjacentIndex(from:direction:displayCount:)``
-- ``DisplayMovement``
-- ``DisplayMovement/centerPreservingSize(windowFrame:in:)``
-- ``DisplayMovement/preservingRelativePosition(windowFrame:from:to:)``
-- ``DisplayTarget``
-- ``DisplayArea``
-- ``DisplayFallback``
-- ``DisplayCycleDirection``
-
-### Control and Provider Protocols
-
-- ``WindowTarget``
-- ``WindowControlling``
-- ``WindowFrameProviding``
-- ``WindowFrameProviding/frame(for:)``
-- ``WindowFrameControlling``
-- ``WindowFrameControlling/setFrame(_:for:)``
-- ``WindowCommandControlling``
-- ``WindowCommandControlling/requestClose(_:)``
-- ``WindowCommandControlling/setMinimized(_:isMinimized:)``
-- ``WindowCommandControlling/setFullScreen(_:isFullScreen:)``
-- ``WindowCommandControlling/raise(_:)``
-- ``WindowCommandControlling/lower(_:)``
-- ``WindowState``
-- ``WindowState/init(isMinimized:isFullScreen:)``
-- ``WindowStateProviding``
-- ``WindowStateProviding/state(for:)``

@@ -9,7 +9,6 @@
     "**/*.{json,md,toml,yaml,yml}"
   ],
   "excludes": [
-    "**/*.docc/**/*.md",
     "**/Artifacts/**",
     "**/ThirdParty/**",
     "**/vendor/**",

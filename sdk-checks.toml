@@ -2,9 +2,6 @@
 inputs = ["Package.swift", "Sources", "Tests", "Artifacts", "ThirdParty", "LICENSE"]
 executable = "WindowManagementConsumer"
 
-[docs]
-output = ".native-build"
-
 [rust_c]
 git_url = "https://github.com/naviapps/window-management.git"
 rust_packages = ["window-management"]

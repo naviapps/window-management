@@ -1,4 +1,4 @@
-# ``WindowManagementMacOS``
+# Swift window queries and control on macOS
 
 AppKit and Accessibility implementations plus AX-specific window role metadata.
 
@@ -95,17 +95,17 @@ unavailable, its write fails without resolving a replacement. Explicit display p
 avoid reading the current frame. Caller-supplied frame controllers retain their own target
 resolution semantics.
 
-``AXWindowController/requestClose(_:)`` resolves one window once, reads its
+`AXWindowController.requestClose(_:)` resolves one window once, reads its
 [close button](https://developer.apple.com/documentation/applicationservices/kaxclosebuttonattribute),
 and requests the native press action on that element. Missing close support reports
 an unsupported operation. A save prompt, refusal or asynchronous close remains under
 the application’s control; request acceptance proves neither closure nor saved data.
 No application termination, keyboard shortcut or replacement window is used as a fallback.
 
-``AXWindowController/toggleFullScreen(_:)`` reads the native full-screen Boolean and writes its
+`AXWindowController.toggleFullScreen(_:)` reads the native full-screen Boolean and writes its
 inverse on the same Accessibility window, even if focus changes during the read. If the state is
 unavailable or invalid, it fails without writing. The request uses the same Accessibility
-permission and error classification as ``AXWindowController/setFullScreen(_:isFullScreen:)``.
+permission and error classification as `AXWindowController.setFullScreen(_:isFullScreen:)`.
 It never posts a keyboard shortcut, selects another window, or waits for the transition to finish.
 
 ## Responsibility Boundary
@@ -120,58 +120,3 @@ privacy disclosures.
 WindowManagementMacOS does not request permissions, collect analytics, transmit data, or persist window
 data by itself. Metadata availability and permission prompts are controlled by macOS and the host
 application.
-
-## Topics
-
-### Querying and Hit Testing
-
-- ``WindowSnapshotQuery``
-- ``WindowSnapshotQuery/init(ownerBundleIdentifierProvider:filter:limit:)``
-- ``WindowSnapshotQuery/snapshots()``
-- ``WindowSnapshotQuery/snapshot(for:)``
-- ``WindowSnapshotQueryLimit``
-- ``WindowSnapshotQueryError``
-- ``WindowHitTester``
-- ``WindowHitTester/init(pointTransform:filter:)``
-- ``WindowHitTester/init(windowLevels:pointTransform:filter:)``
-- ``WindowOwnerBundleIdentifierProviding``
-- ``WindowOwnerBundleIdentifierProviding/bundleIdentifier(forProcessIdentifier:)``
-- ``NSRunningApplicationBundleIdentifierProvider``
-- ``NSRunningApplicationBundleIdentifierProvider/init()``
-- ``NSRunningApplicationBundleIdentifierProvider/bundleIdentifier(forProcessIdentifier:)``
-
-### Placement
-
-- ``WindowPlacer``
-- ``WindowPlacer/init()``
-- ``WindowPlacer/init(frameController:displayProvider:)``
-- ``WindowPlacer/place(_:for:display:area:inset:displayFallback:)``
-- ``WindowPlacer/moveToAdjacentDisplay(_:for:preservingRelativePosition:displayFallback:)``
-- ``WindowPlacerError``
-- ``AppKitDisplayProvider``
-- ``AppKitDisplayProvider/init()``
-- ``AppKitDisplayProvider/displays()``
-
-### Accessibility Access
-
-- ``WindowAccessibilityError``
-- ``WindowAccessibilityOperation``
-- ``WindowAccessibilityOperationFailure``
-- ``AXWindowController``
-- ``AXWindowController/init()``
-- ``AXWindowController/frame(for:)``
-- ``AXWindowController/setFrame(_:for:)``
-- ``AXWindowController/state(for:)``
-- ``AXWindowController/requestClose(_:)``
-- ``AXWindowController/setMinimized(_:isMinimized:)``
-- ``AXWindowController/setFullScreen(_:isFullScreen:)``
-- ``AXWindowController/toggleFullScreen(_:)``
-- ``AXWindowController/raise(_:)``
-- ``AXWindowController/lower(_:)``
-- ``AXWindowController/role(for:)``
-
-### Roles
-
-- ``WindowRole``
-- ``WindowRoleProviding``
-- ``WindowRoleProviding/role(for:)``

@@ -7,8 +7,8 @@ onboarding, product policy, persistence and UI.
 ## Documentation
 
 - [Platform contracts](#platform-contracts): shared boundaries and Windows behavior.
-- [Swift values and providers](https://github.com/naviapps/window-management/blob/main/Sources/WindowManagement/WindowManagement.docc/WindowManagement.md): `WindowManagement` API catalog.
-- [Native macOS adapters](https://github.com/naviapps/window-management/blob/main/Sources/WindowManagementMacOS/WindowManagementMacOS.docc/WindowManagementMacOS.md): queries, hit testing, placement and Accessibility.
+- [Swift window values, geometry and requests](https://github.com/naviapps/window-management/blob/main/docs/swift.md)
+- [Native macOS queries, hit testing, placement and Accessibility](https://github.com/naviapps/window-management/blob/main/docs/swift-macos.md)
 - [Development](#development): setup, checks, native artifacts, packages and owned fixtures.
 
 ## Installation
@@ -155,7 +155,7 @@ Empty display lists never resolve.
 Native requests can fail or be constrained by the target application. Close/state
 acceptance proves neither completion nor saved data. Shared geometry, snapshot filtering
 and strict JSON contracts are documented in the
-[core API catalog](https://github.com/naviapps/window-management/blob/main/Sources/WindowManagement/WindowManagement.docc/WindowManagement.md).
+[core guide](https://github.com/naviapps/window-management/blob/main/docs/swift.md).
 Compilation does not establish native runtime coverage; acceptance belongs to its source
 and environment.
 
@@ -204,12 +204,12 @@ or an invalid point returns `NoMatchingWindowAtPoint`. These are values in
 Windows close requests post an ordinary close after identity validation. Applications
 may prompt, refuse or complete later; there is no process termination, keyboard shortcut
 or replacement-window fallback. macOS command details belong to the
-[native API catalog](https://github.com/naviapps/window-management/blob/main/Sources/WindowManagementMacOS/WindowManagementMacOS.docc/WindowManagementMacOS.md).
+[native guide](https://github.com/naviapps/window-management/blob/main/docs/swift-macos.md).
 
 ## Repository layout
 
 `crates/` owns Rust, Windows resources and the C ABI; `Sources/` / `Tests/` own Swift
-and DocC. Managed projects live in `bindings/dotnet/` and independent clients in
+source and tests. Managed projects live in `bindings/dotnet/` and independent clients in
 `fixtures/consumers/`. The separate-process Windows desktop fixture lives in
 `fixtures/acceptance/windows/`. The [native build policy](native.toml) selects the framework in `Artifacts/`.
 Upstream notices are retained in `ThirdParty/`. Package and Windows acceptance drivers are in
@@ -240,9 +240,8 @@ Use `mise exec -- make <target>` so pinned tools remain available in temporary c
 | Target                     | SDK coverage                                                                            |
 | -------------------------- | --------------------------------------------------------------------------------------- |
 | `check`                    | Lint, Rust tests and Clippy, strict Swift tests, Swift consumer and managed compilation |
-| `check-distribution`       | Framework, Swift release build, DocC, distribution fixtures and installed clients       |
+| `check-distribution`       | Framework, Swift release build, distribution fixtures and installed clients             |
 | `test-rust`                | Clippy and workspace tests with `--locked --offline`                                    |
-| `test-docs`                | Both catalogs against public symbol graphs, warnings as errors                          |
 | `test-consumer`            | Both Swift products installed with synthetic providers                                  |
 | `test-installed-consumers` | Independent Rust Git client and installed-framework C client                            |
 | `test-c` / `test-dotnet`   | Native C / managed boundary fixtures against the framework                              |
@@ -309,7 +308,9 @@ The package fixture in `fixtures/consumers/dotnet/Program.cs` runs after
 receipt and byte checks in an isolated restore. `--package-source <directory>` selects a
 private/local feed; `nuget-consumer --dependency <nupkg>` adds dependencies to its empty
 feed. No feed is published. Cross-OS packing checks provenance, while Mach-O/signature
-inspection must happen on macOS. Loading a macOS package does not verify Windows.
+inspection must happen on macOS. The shared distribution workflow packs
+`osx-arm64`, `osx-x64` and `win-x64` together and runs independent macOS and
+Windows consumers against the same package bytes.
 DesktopActions resolves its WindowManagement dependency by its pinned commit.
 Each selected runtime's receipt must verify against this checkout before packing.
 
@@ -328,7 +329,7 @@ whether WindowServer lists the transparent window and changes no permissions/set
 
 On an owned Windows 11 worker, use Python, Rust and MSVC matching the worker's
 architecture, the `x86_64-pc-windows-msvc` Rust standard library and the x64 .NET SDK
-pinned in `mise.toml`. Set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64
+pinned in `global.json`. Set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64
 builds x64 artifacts and runs the x64 fixtures through Windows emulation:
 
 ```powershell
