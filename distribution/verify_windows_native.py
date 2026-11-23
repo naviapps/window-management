@@ -10,7 +10,7 @@ import tomllib
 from pathlib import Path
 
 from sdk_tooling.adapters import load, support_inputs
-from sdk_tooling.native_plan import builder
+from sdk_tooling.native_plan import ffi_product
 
 from distribution.windows_target import RID, TARGET
 
@@ -38,7 +38,7 @@ def main(root=None, argv=None):
     if args.build_only and args.desktop:
         parser.error("--build-only and --desktop select different validation scopes")
     inputs = support_inputs(root)
-    native = builder(root)
+    native = ffi_product(root)
     windows = load("windows")
     environment = {
         key.upper(): value for key, value in os.environ.items() if key.upper() != "DOTNET_HOST_PATH"

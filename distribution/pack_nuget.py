@@ -6,7 +6,8 @@ import tomllib
 from pathlib import Path
 
 from sdk_tooling.adapters import load
-from sdk_tooling.native_plan import builder
+from sdk_tooling.native_plan import ffi_product
+from sdk_tooling.xcframework import xcframework
 
 from distribution.windows_target import RID
 
@@ -18,8 +19,8 @@ def main(argv=None):
     )
     parser.add_argument("--package-source", action="append", default=[])
     args = parser.parse_args(argv)
-    native = builder(Path(__file__).resolve().parents[1])
-    root = native.root
+    root = Path(__file__).resolve().parents[1]
+    native = ffi_product(root) if set(args.runtime) == {RID} else xcframework(root)
     selected = {"LICENSE": root / "LICENSE", "README.md": root / "README.md"}
     selected.update(
         {

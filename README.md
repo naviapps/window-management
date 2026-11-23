@@ -280,7 +280,7 @@ macOS. The Rust client uses a local Git mirror and fetches registry
 dependencies into a fresh cache before locked offline checks; the C client uses the
 copied framework/header. Both test synthetic placement and missing-display fallback.
 For shallow checkouts, pass a complete repository/bundle with
-`mise run sdk-tooling -- installed-consumers --git-source <path>`; retain results
+`mise run sdk-tooling -- rust-c-consumers --git-source <path>`; retain results
 with an unused `--evidence` path outside the checkout. This does not test remote
 credentials, Windows DLLs or a framework rebuild.
 
@@ -297,12 +297,12 @@ and test a local package on macOS:
 
 ```sh
 mise run sdk-tooling -- python distribution/pack_nuget.py --runtime osx-arm64 --runtime osx-x64
-mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
+mise run sdk-tooling -- nuget-consumer .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
 The package fixture in `fixtures/consumers/dotnet/Program.cs` runs after
 receipt and byte checks in an isolated restore. `--package-source <directory>` selects a
-private/local feed; `binding-consumer nuget --dependency <nupkg>` adds dependencies to its empty
+private/local feed; `nuget-consumer --dependency <nupkg>` adds dependencies to its empty
 feed. No feed is published. Cross-OS packing checks provenance, while Mach-O/signature
 inspection must happen on macOS. Loading a macOS package does not verify Windows.
 DesktopActions resolves its WindowManagement dependency by its pinned commit.
@@ -329,7 +329,7 @@ builds x64 artifacts and runs the x64 fixtures through Windows emulation:
 ```powershell
 mise run sdk-tooling -- python distribution/verify_windows_native.py --desktop
 mise run sdk-tooling -- python distribution/pack_nuget.py --runtime win-x64
-mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
+mise run sdk-tooling -- nuget-consumer .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
 The Windows x64 gate checks PE architecture, exports, CRT linkage, Rust and C fixtures,

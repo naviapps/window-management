@@ -21,13 +21,41 @@ ci = importlib.import_module("distribution.verify_windows")
 class WindowsToolsTests(unittest.TestCase):
     def test_pack_rejects_arm64_before_loading_native_artifacts(self):
         with (
-            patch.object(pack, "builder") as builder,
+            patch.object(pack, "ffi_product") as product,
+            patch.object(pack, "xcframework") as framework,
             patch.object(sys, "stderr"),
             self.assertRaises(SystemExit) as rejected,
         ):
             pack.main(["--runtime", "win-arm64"])
         self.assertEqual(rejected.exception.code, 2)
-        builder.assert_not_called()
+        product.assert_not_called()
+        framework.assert_not_called()
+
+    def test_pack_uses_the_framework_only_when_a_mac_runtime_is_selected(self):
+        for runtimes, requires_framework in (
+            (("win-x64",), False),
+            (("osx-arm64", "osx-x64"), True),
+            (("win-x64", "osx-arm64", "osx-x64"), True),
+        ):
+            nuget = Mock()
+            modules = {"artifacts": Mock(files=Mock(return_value=())), "nuget": nuget}
+            with (
+                self.subTest(runtimes=runtimes),
+                patch.object(pack, "ffi_product") as product,
+                patch.object(pack, "xcframework") as framework,
+                patch.object(pack, "load", side_effect=modules.__getitem__),
+            ):
+                command = [argument for rid in runtimes for argument in ("--runtime", rid)]
+                pack.main(command)
+                selected, unused = (
+                    (framework, product) if requires_framework else (product, framework)
+                )
+                selected.assert_called_once_with(Path(pack.__file__).resolve().parents[1])
+                unused.assert_not_called()
+                nuget.pack_native.assert_called_once()
+                call_ = nuget.pack_native.call_args
+                self.assertEqual(call_.args, (selected.return_value,))
+                self.assertEqual(call_.kwargs["argv"], command)
 
     def test_windows_build_selects_native_tools_for_the_x64_target(self):
         for host in ("x64", "arm64"):
@@ -48,7 +76,7 @@ class WindowsToolsTests(unittest.TestCase):
                     patch.dict(os.environ, {"DOTNET_HOST_PATH": "host default"}, clear=True),
                     patch.object(build, "load", return_value=backend),
                     patch.object(build, "support_inputs", return_value={}),
-                    patch.object(build, "builder", return_value=native),
+                    patch.object(build, "ffi_product", return_value=native),
                     patch.object(build.subprocess, "check_output", return_value="10.0.403\n"),
                     patch.object(build.subprocess, "run") as run,
                     patch("builtins.print"),
@@ -83,7 +111,7 @@ class WindowsToolsTests(unittest.TestCase):
                 native = root / ".native-build/windows/win-x64/native-build.json"
                 package = root / ".native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg"
                 seen = []
-                sdk = str(root / "tooling/tasks/sdk")
+                sdk = str(root / "tooling/ci/run_sdk_tooling.py")
 
                 checker = "distribution/verify_windows_native.py"
                 packer = "distribution/pack_nuget.py"
@@ -93,7 +121,7 @@ class WindowsToolsTests(unittest.TestCase):
                         script, *arguments = command[2:]
                         seen.append(script)
                     else:
-                        script, arguments = "binding-consumer", command[1:]
+                        script, arguments = "nuget-consumer", command[1:]
                         seen.append(script)
                     if script == checker:
                         self.assertEqual(arguments, ["--desktop"] if desktop else [])
@@ -117,7 +145,7 @@ class WindowsToolsTests(unittest.TestCase):
                     else:
                         self.assertEqual(
                             arguments,
-                            ["-I", "-B", sdk, "binding-consumer", "nuget", str(package)],
+                            ["-I", "-B", sdk, "nuget-consumer", str(package)],
                         )
                         if changed == "package":
                             package.write_bytes(b"changed after acceptance")
@@ -136,8 +164,7 @@ class WindowsToolsTests(unittest.TestCase):
                     "-I",
                     "-B",
                     sdk,
-                    "binding-consumer",
-                    "nuget",
+                    "nuget-consumer",
                     package,
                 ]
                 with (
@@ -146,7 +173,7 @@ class WindowsToolsTests(unittest.TestCase):
                     patch.object(
                         ci,
                         "load",
-                        side_effect={"windows": backend, "binding_checks": tooling}.__getitem__,
+                        side_effect={"windows": backend, "consumers.nuget": tooling}.__getitem__,
                     ),
                     patch.object(
                         ci,
@@ -169,7 +196,7 @@ class WindowsToolsTests(unittest.TestCase):
                             ci.main(root=root, argv=options)
                     else:
                         ci.main(root=root, argv=options)
-                tooling.command.assert_called_once_with("nuget", package)
+                tooling.command.assert_called_once_with(package)
                 self.assertEqual(
                     python_command.call_args_list,
                     [
@@ -177,7 +204,7 @@ class WindowsToolsTests(unittest.TestCase):
                         call(root, packer, "--runtime", "win-x64"),
                     ],
                 )
-                self.assertEqual(seen, [checker, packer, "binding-consumer"])
+                self.assertEqual(seen, [checker, packer, "nuget-consumer"])
                 backend.target_dotnet.assert_called_once_with("arm64", "x64", env)
                 expected = {"win-x64", "desktop-acceptance"} if desktop else {"win-x64"}
                 self.assertEqual({p.name for p in (output / "sdk-windows").iterdir()}, expected)

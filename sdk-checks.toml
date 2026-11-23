@@ -5,19 +5,22 @@ executable = "WindowManagementConsumer"
 [docs]
 output = ".native-build"
 
-[installed]
+[rust_c]
 git_url = "https://github.com/naviapps/window-management.git"
 rust_packages = ["window-management"]
 
-[installed.c]
+[rust_c.c]
 framework = "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework"
 header = "window_management.h"
 
 [bindings]
 abi_fixture = "crates/ffi/tests/c/abi.c"
 dotnet_project = "bindings/dotnet/tests/NaviApps.WindowManagement.Tests/NaviApps.WindowManagement.Tests.csproj"
-nuget_id = "NaviApps.WindowManagement"
-nuget_fixtures = [
+windows_x64 = true
+
+[nuget]
+package_id = "NaviApps.WindowManagement"
+fixtures = [
   "fixtures/consumers/dotnet/Program.cs",
 ]
 windows_x64 = true
