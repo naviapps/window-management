@@ -1,0 +1,4 @@
+[[artifacts]]
+id = "sdk"
+symbol_prefix = "window_management_"
+minimum_macos = "26.0"

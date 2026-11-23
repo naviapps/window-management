@@ -11,12 +11,13 @@ import sys
 import tomllib
 from pathlib import Path
 
-from _tooling import load, support_inputs
-from _windows import RID
+from sdk_tooling.adapters import load, python_command, support_inputs
+
+from fixtures.distribution._windows import RID
 
 
 def main(root=None, argv=None):
-    root = Path(root or Path(__file__).resolve().parent.parent).resolve()
+    root = Path(root or Path(__file__).resolve().parents[2]).resolve()
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument(
         "--skip-desktop",
@@ -27,7 +28,7 @@ def main(root=None, argv=None):
     destination = os.environ.get("NAVI_CI_ARTIFACTS")
     if sys.platform != "win32" or not destination:
         raise SystemExit("Use the owned Windows CI worker; artifact ownership must be explicit.")
-    inputs = support_inputs()
+    inputs = support_inputs(root)
     output = Path(destination)
     output.mkdir(parents=True, exist_ok=True)
     workspace = tomllib.loads((root / "Cargo.toml").read_text())
@@ -50,9 +51,9 @@ def main(root=None, argv=None):
     accepted = False
     try:
         desktop = [] if args.skip_desktop else ["--desktop"]
-        run([sys.executable, "tools/check-windows.py", *desktop])
+        run(python_command(root, "fixtures/distribution/check-windows.py", *desktop))
         native_digest = hashlib.sha256(native_receipt.read_bytes()).hexdigest()
-        run([sys.executable, "tools/pack-dotnet.py", "--runtime", RID])
+        run(python_command(root, "fixtures/distribution/pack-dotnet.py", "--runtime", RID))
         receipt_bytes = package_receipt.read_bytes()
         receipt = json.loads(receipt_bytes)
         if (
@@ -62,7 +63,7 @@ def main(root=None, argv=None):
         ):
             raise ValueError("Windows package differs from the accepted x64 build")
         run(load("binding_checks").command("nuget", package))
-        if inputs != support_inputs():
+        if inputs != support_inputs(root):
             raise ValueError("Build support changed during Windows x64 acceptance")
         if (
             receipt["sha256"] != hashlib.sha256(package.read_bytes()).hexdigest()

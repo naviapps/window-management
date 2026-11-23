@@ -205,8 +205,8 @@ or replacement-window fallback. macOS command details belong to the
 
 `crates/` owns Rust, Windows resources and the C ABI; `Sources/` / `Tests/` own Swift
 and DocC. Managed projects live in `bindings/dotnet`, independent clients in `fixtures`,
-and retained frameworks/notices in `Artifacts` / `ThirdParty`. `tools/` contains the
-SDK-specific build specifications and fixtures.
+and retained frameworks/notices in `Artifacts` / `ThirdParty`. [Native build policy](native.toml)
+selects the framework. `fixtures/distribution` contains this SDK's package and Windows acceptance drivers.
 
 ## Development
 
@@ -251,12 +251,10 @@ results, raw-byte and Codable projection, native ownership and the public entry 
 ### Distribution verification
 
 The [distribution plan](sdk-distribution.toml) selects this SDK's macOS and Windows
-x64 checks. For local checks that use the framework producer or Windows package
-driver, set `NAVI_SDK_TOOLING_SOURCE` to a clean SDK Tooling checkout at the revision
-in [mise.toml](mise.toml):
+x64 checks. Local distribution checks use the public SDK Tooling CLI pinned in
+[mise.toml](mise.toml):
 
 ```sh
-export NAVI_SDK_TOOLING_SOURCE=/path/to/sdk-tooling
 mise exec -- make check-distribution
 ```
 
@@ -267,9 +265,6 @@ to the full SDK commit SHA from `main` and dispatch the workflow:
 gh workflow run check-sdk-distribution.yml -R naviapps/sdk-tooling \
   -f sdk=window-management -f revision="$SDK_COMMIT_SHA"
 ```
-
-Use this distribution setup for the native artifact, package and installed
-consumer commands below.
 
 ### Consumers, artifacts and packages
 
@@ -290,6 +285,7 @@ credentials, Windows DLLs or a framework rebuild.
 `Artifacts/CWindowManagement.xcframework` and `Artifacts/native-build.json` are retained
 consumer inputs. Run `mise exec -- make native` after captured production inputs change,
 then `mise exec -- make native-verify`. Test-only Rust edits do not invalidate them.
+The [native build policy](native.toml) and its inputs are recorded in the receipt.
 The framework combines original notices in `Resources/ThirdPartyNotices.txt`; originals
 and Rust provenance remain in `ThirdParty/` and accompany selected NuGet runtimes.
 
@@ -298,7 +294,7 @@ in `.native-build/windows/win-x64`; the macOS framework belongs in `Artifacts`. 
 and test a local package on macOS:
 
 ```sh
-mise exec -- python3 -B tools/pack-dotnet.py --runtime osx-arm64 --runtime osx-x64
+mise run sdk-tooling -- python fixtures/distribution/pack-dotnet.py --runtime osx-arm64 --runtime osx-x64
 mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
@@ -329,9 +325,8 @@ pinned in `mise.toml`. Set `DOTNET_BIN` to the absolute x64 executable. Windows 
 builds x64 artifacts and runs the x64 fixtures through Windows emulation:
 
 ```powershell
-$env:NAVI_SDK_TOOLING_SOURCE = "C:\path\to\sdk-tooling"
-python -B tools/check-windows.py --desktop
-python -B tools/pack-dotnet.py --runtime win-x64
+mise run sdk-tooling -- python fixtures/distribution/check-windows.py --desktop
+mise run sdk-tooling -- python fixtures/distribution/pack-dotnet.py --runtime win-x64
 mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 

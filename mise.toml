@@ -26,4 +26,4 @@ run = "mise run sdk-tooling -- quality format --dotnet"
 
 [tasks.sdk-tooling]
 description = "Run the pinned shared SDK checks"
-run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@2921615e70d9239ce10202549751a25d18b8c0f7 sdk-tooling"
+run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@38e38b0f5c291400f1d91ed2f2a58b3574a6ebc2 sdk-tooling"

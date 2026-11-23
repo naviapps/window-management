@@ -9,13 +9,14 @@ import sys
 import tomllib
 from pathlib import Path
 
-from _tooling import load, support_inputs
-from _windows import RID, TARGET
-from native import builder
+from sdk_tooling.adapters import load, support_inputs
+from sdk_tooling.native_plan import builder
+
+from fixtures.distribution._windows import RID, TARGET
 
 
 def main(root=None, argv=None):
-    root = Path(root or Path(__file__).resolve().parent.parent).resolve()
+    root = Path(root or Path(__file__).resolve().parents[2]).resolve()
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument(
         "--desktop", action="store_true", help="Run this SDK's separate-process desktop fixture"
@@ -36,8 +37,8 @@ def main(root=None, argv=None):
         raise SystemExit("Native Windows is required; cross-compilation is not runtime acceptance.")
     if args.build_only and args.desktop:
         parser.error("--build-only and --desktop select different validation scopes")
-    inputs = support_inputs()
-    native = builder()
+    inputs = support_inputs(root)
+    native = builder(root)
     windows = load("windows")
     environment = {
         key.upper(): value for key, value in os.environ.items() if key.upper() != "DOTNET_HOST_PATH"
@@ -54,7 +55,7 @@ def main(root=None, argv=None):
 
     run(["cargo", "fetch", "--locked", "--target", TARGET])
     destination = windows.build_library(native, env, tools, "x64", native_host=host)
-    if inputs != support_inputs():
+    if inputs != support_inputs(root):
         raise ValueError("Build support changed during the Windows x64 build")
     if args.build_only:
         print(f"{root.name} Windows x64 artifact built on {host}. Fixtures did not run.")
@@ -71,7 +72,7 @@ def main(root=None, argv=None):
         run(command("dotnet", "--native-root", destination, *sources))
         if args.desktop:
             run_desktop(root, dotnet, env, library, args.package_source, run)
-    if inputs != support_inputs():
+    if inputs != support_inputs(root):
         raise ValueError("Build support changed during Windows x64 fixture checks")
     print(
         root.name

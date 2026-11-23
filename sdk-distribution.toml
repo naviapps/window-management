@@ -9,6 +9,25 @@ commands = [
 commands = [
   ["rustup", "install", "--no-self-update"],
   ["cargo", "fmt", "--all", "--", "--check"],
-  ["python", "-E", "-S", "-B", "-m", "unittest", "discover", "-s", "tools/tests"],
-  ["python", "-I", "-B", "{tooling}/tasks/sdk", "windows", "tools/check-ci.py", "--skip-desktop"],
+  [
+    "python",
+    "-I",
+    "-B",
+    "{tooling}/tasks/sdk",
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "fixtures/distribution/tests",
+  ],
+  [
+    "python",
+    "-I",
+    "-B",
+    "{tooling}/tasks/sdk",
+    "windows",
+    "fixtures/distribution/check-ci.py",
+    "--skip-desktop",
+  ],
 ]

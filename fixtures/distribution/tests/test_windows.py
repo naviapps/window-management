@@ -12,11 +12,10 @@ from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import Mock, call, patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-windows = importlib.import_module("_windows")
-build = importlib.import_module("check-windows")
-pack = importlib.import_module("pack-dotnet")
-ci = importlib.import_module("check-ci")
+windows = importlib.import_module("fixtures.distribution._windows")
+build = importlib.import_module("fixtures.distribution.check-windows")
+pack = importlib.import_module("fixtures.distribution.pack-dotnet")
+ci = importlib.import_module("fixtures.distribution.check-ci")
 
 
 class WindowsToolsTests(unittest.TestCase):
@@ -86,14 +85,22 @@ class WindowsToolsTests(unittest.TestCase):
                 seen = []
                 sdk = str(root / "tooling/tasks/sdk")
 
+                checker = "fixtures/distribution/check-windows.py"
+                packer = "fixtures/distribution/pack-dotnet.py"
+
                 def run(command, **_options):
-                    seen.append(command[1:])
-                    if command[1] == "tools/check-windows.py":
-                        self.assertEqual(command[2:], ["--desktop"] if desktop else [])
+                    if command[1] == "run-sdk-fixture":
+                        script, *arguments = command[2:]
+                        seen.append(script)
+                    else:
+                        script, arguments = "binding-consumer", command[1:]
+                        seen.append(script)
+                    if script == checker:
+                        self.assertEqual(arguments, ["--desktop"] if desktop else [])
                         native.parent.mkdir(parents=True)
                         native.write_text("{}")
-                    elif command[1] == "tools/pack-dotnet.py":
-                        self.assertEqual(command[2:], ["--runtime", "win-x64"])
+                    elif script == packer:
+                        self.assertEqual(arguments, ["--runtime", "win-x64"])
                         package.parent.mkdir(parents=True)
                         package.write_bytes(b"accepted")
                         package.with_suffix(".nupkg.json").write_text(
@@ -109,7 +116,7 @@ class WindowsToolsTests(unittest.TestCase):
                         )
                     else:
                         self.assertEqual(
-                            command[1:],
+                            arguments,
                             ["-I", "-B", sdk, "binding-consumer", "nuget", str(package)],
                         )
                         if changed == "package":
@@ -143,6 +150,15 @@ class WindowsToolsTests(unittest.TestCase):
                         "support_inputs",
                         side_effect=[{}, {"build.py": "updated"} if changed == "support" else {}],
                     ),
+                    patch.object(
+                        ci,
+                        "python_command",
+                        side_effect=lambda selected_root, *arguments: [
+                            sys.executable,
+                            "run-sdk-fixture",
+                            *arguments,
+                        ],
+                    ) as python_command,
                     patch.object(ci.subprocess, "run", side_effect=run),
                 ):
                     if changed:
@@ -152,9 +168,13 @@ class WindowsToolsTests(unittest.TestCase):
                         ci.main(root=root, argv=options)
                 tooling.command.assert_called_once_with("nuget", package)
                 self.assertEqual(
-                    [command[0] for command in seen],
-                    ["tools/check-windows.py", "tools/pack-dotnet.py", "-I"],
+                    python_command.call_args_list,
+                    [
+                        call(root, checker, *([] if not desktop else ["--desktop"])),
+                        call(root, packer, "--runtime", "win-x64"),
+                    ],
                 )
+                self.assertEqual(seen, [checker, packer, "binding-consumer"])
                 backend.target_dotnet.assert_called_once_with("arm64", "x64", env)
                 expected = {"win-x64", "desktop-acceptance"} if desktop else {"win-x64"}
                 self.assertEqual({p.name for p in (output / "sdk-windows").iterdir()}, expected)

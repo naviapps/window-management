@@ -5,9 +5,10 @@ import argparse
 import tomllib
 from pathlib import Path
 
-from _tooling import load
-from _windows import RID
-from native import builder
+from sdk_tooling.adapters import load
+from sdk_tooling.native_plan import builder
+
+from fixtures.distribution._windows import RID
 
 
 def main(argv=None):
@@ -17,7 +18,7 @@ def main(argv=None):
     )
     parser.add_argument("--package-source", action="append", default=[])
     args = parser.parse_args(argv)
-    native = builder()
+    native = builder(Path(__file__).resolve().parents[2])
     root = native.root
     selected = {"LICENSE": root / "LICENSE", "README.md": root / "README.md"}
     selected.update(
@@ -37,7 +38,7 @@ def main(argv=None):
         nuget_config=root / "bindings/dotnet/NuGet.Config",
         input_files=[
             Path(__file__),
-            root / "tools/_tooling.py",
+            root / "native.toml",
             root / "mise.toml",
         ],
         argv=[value for rid in args.runtime for value in ("--runtime", rid)]
