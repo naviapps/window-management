@@ -12,31 +12,37 @@ concurrency:
   cancel-in-progress: true
 jobs:
   windows:
-    name: Build and verify x64 consumers
+    name: Test Rust and .NET
     runs-on: windows-2025
-    timeout-minutes: 60
+    timeout-minutes: 30
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_CLI_USE_MSBUILD_SERVER: "0"
       MSBUILDDISABLENODEREUSE: "1"
       GIT_TERMINAL_PROMPT: "0"
+      RUST_TARGET: "x86_64-pc-windows-msvc"
     steps:
       - uses: actions/checkout@v6.1.0
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v7.1.0
-        with:
-          python-version: "3.15.1"
-          architecture: x64
-      - name: Select the pinned Rust toolchain and check formatting
+      - name: Install pinned Rust toolchain
+        run: rustup install --no-self-update
+      - name: Check Rust formatting
         run: cargo fmt --all -- --check
+      - name: Test Rust workspace
+        run: cargo test --workspace --locked --target $env:RUST_TARGET
       - uses: actions/setup-dotnet@v6.0.0
         env:
           DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
           dotnet-version: "10.0.403"
           architecture: x64
-      - name: Run Windows x64 tooling fixtures
-        run: python -E -S -B -m unittest discover -s tools/tests
-      - name: Build the x64 DLL and validate C, .NET and installed NuGet consumers
-        run: python -E -S -B tools/windows-ci.py tools/check-ci.py --skip-desktop
+      - name: Build native binding library
+        run: cargo build --locked --target $env:RUST_TARGET -p window-management-ffi
+      - name: Test .NET bindings
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'NaviApps.WindowManagement.Tests'
+          dotnet build bindings/dotnet/tests/NaviApps.WindowManagement.Tests/NaviApps.WindowManagement.Tests.csproj --configuration Release --output $output
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item "target/$env:RUST_TARGET/debug/window_management_ffi.dll" $output
+          dotnet (Join-Path $output 'NaviApps.WindowManagement.Tests.dll')

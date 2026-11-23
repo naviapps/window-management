@@ -9,7 +9,6 @@ workflows:
     '.github/workflows/check-windows.yml':
         - 'actions/checkout@v6.1.0'
         - 'actions/setup-dotnet@v6.0.0'
-        - 'actions/setup-python@v7.1.0'
 dependencies:
     'actions/checkout@v6.1.0':
         ref: 'v6.1.0'
@@ -21,11 +20,6 @@ dependencies:
         commit: 'sha1-a98b56852c35b8e3190ac28c8c2271da59106c68'
         owner_id: 44036562
         repo_id: 192625306
-    'actions/setup-python@v7.1.0':
-        ref: 'v7.1.0'
-        commit: 'sha1-6d4fd22b20465ccc0f7354476588e8df7c9ca0e0'
-        owner_id: 44036562
-        repo_id: 192625525
     'jdx/mise-action@v5.3.0':
         ref: 'v5.3.0'
         commit: 'sha1-924e7c586e33d7d4bae9c14e26c5d22e2beb6e78'

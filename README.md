@@ -224,20 +224,21 @@ mise exec -- make check
 ```
 
 The fetch prepares the Cargo cache for locked offline Rust checks. Formatting,
-framework verification and standalone consumer checks run from this checkout.
+Rust and Swift tests, and the standalone Swift consumer run from this checkout.
 Ordinary SwiftPM/C/NuGet consumers do not need developer setup.
 
 Use `mise exec -- make <target>` so pinned tools remain available in temporary clients.
 
-| Target                     | SDK coverage                                                                                      |
-| -------------------------- | ------------------------------------------------------------------------------------------------- |
-| `check`                    | Lint, framework verification, strict Swift tests and release build, Swift consumer, Rust and DocC |
-| `test-rust`                | Clippy and workspace tests with `--locked --offline`                                              |
-| `test-docs`                | Both catalogs against public symbol graphs, warnings as errors                                    |
-| `test-consumer`            | Both Swift products installed with synthetic providers                                            |
-| `test-installed-consumers` | Independent Rust Git client and installed-framework C client                                      |
-| `test-c` / `test-dotnet`   | Native C / managed boundary fixtures against the framework                                        |
-| `native` / `native-verify` | Rebuild / verify the universal macOS framework and receipt                                        |
+| Target                     | SDK coverage                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| `check`                    | Lint, Rust tests and Clippy, strict Swift tests, Swift consumer and managed compilation |
+| `check-distribution`       | Framework receipts, Swift release build, DocC and distribution tool tests               |
+| `test-rust`                | Clippy and workspace tests with `--locked --offline`                                    |
+| `test-docs`                | Both catalogs against public symbol graphs, warnings as errors                          |
+| `test-consumer`            | Both Swift products installed with synthetic providers                                  |
+| `test-installed-consumers` | Independent Rust Git client and installed-framework C client                            |
+| `test-c` / `test-dotnet`   | Native C / managed boundary fixtures against the framework                              |
+| `native` / `native-verify` | Rebuild / verify the universal macOS framework and receipt                              |
 
 `mise run lint` checks owned source; `mise run format` formats it. `DOTNET_BIN` selects
 an existing .NET executable. Native acceptance is separate from compilation and tests.
@@ -245,6 +246,28 @@ The Rust integration suite covers geometry, display selection and the JSON contr
 for placement and movement requests.
 Language and installed-consumer fixtures also check coordinate marshalling, typed
 results, raw-byte and Codable projection, native ownership and the public entry points.
+
+### Distribution verification
+
+The distribution checks use the private `naviapps/sdk-tooling` repository. For
+local maintainer checks, prepare a clean SDK Tooling checkout at the commit in
+[`tools/tooling-sources.json`](tools/tooling-sources.json) and set its absolute path:
+
+```sh
+export NAVI_SDK_TOOLING_SOURCE=/path/to/sdk-tooling
+mise exec -- make check-distribution
+```
+
+To run the hosted macOS and Windows distribution checks, set `SDK_COMMIT_SHA`
+to the full SDK commit SHA from `main` and dispatch the workflow:
+
+```sh
+gh workflow run check-sdk-distribution.yml -R naviapps/sdk-tooling \
+  -f sdk=window-management -f revision="$SDK_COMMIT_SHA"
+```
+
+Use this distribution setup for the native artifact, package and installed
+consumer commands below.
 
 ### Consumers, artifacts and packages
 
@@ -288,8 +311,9 @@ Each selected runtime's receipt must verify against this checkout before packing
 ### Owned platform acceptance
 
 GitHub Actions runs the same strict Swift tests and standalone Swift consumer
-against the tracked framework on macOS 26 and 27. A separate Xcode 27 job verifies
-SDK distribution and the Rust, C and .NET consumers.
+against the tracked framework on macOS 26 and 27. The public Windows x64 job
+runs Rust and .NET binding tests. SDK Tooling verifies the distribution and
+runs the installed Rust, C and .NET consumers in its macOS distribution job.
 In an owned ephemeral VM, `OwnedWindowListRuntimeTests` covers fixture-owned windows,
 ordering, transparent-front-window hits and reads after closure. With
 `WINDOW_MANAGEMENT_RUN_OWNED_CG_TESTS=1`, `NAVI_CI_OWNED_VM=1` and controller source
@@ -303,6 +327,7 @@ pinned in `mise.toml`. Set `DOTNET_BIN` to the absolute x64 executable. Windows 
 builds x64 artifacts and runs the x64 fixtures through Windows emulation:
 
 ```powershell
+$env:NAVI_SDK_TOOLING_SOURCE = "C:\path\to\sdk-tooling"
 python -B tools/check-windows.py --desktop
 python -B tools/pack-dotnet.py --runtime win-x64
 python -B tools/test-package.py .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
@@ -314,8 +339,8 @@ to control and close a separate owned x64 Win32 window compiled from Rust and
 records the host and managed process architecture.
 `--build-only` prepares the x64 DLL and receipt without running the fixtures.
 
-The GitHub-hosted Windows x64 workflow runs Rust, tooling, C, .NET and NuGet
-package checks. Run the separate `--desktop` fixture on an owned Windows desktop.
+The SDK Tooling Windows x64 distribution job runs the full DLL and NuGet
+package checks. Run the `--desktop` fixture on an owned Windows desktop.
 
 The [selection benchmark](https://github.com/naviapps/window-management/blob/main/crates/core/examples/selection_benchmark.rs) runs with
 `mise exec -- cargo run -p window-management --example selection_benchmark --release --locked --offline`.

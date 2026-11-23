@@ -5,7 +5,7 @@ import argparse
 import tomllib
 from pathlib import Path
 
-from _tooling import load, support_inputs
+from _tooling import load
 from _windows import RID
 from native import builder
 
@@ -35,7 +35,11 @@ def main(argv=None):
         authors="Navi Apps",
         package_files=selected,
         nuget_config=root / "bindings/dotnet/NuGet.Config",
-        input_files=[Path(__file__), *(root / relative for relative in support_inputs())],
+        input_files=[
+            Path(__file__),
+            root / "tools/_tooling.py",
+            root / "tools/tooling-sources.json",
+        ],
         argv=[value for rid in args.runtime for value in ("--runtime", rid)]
         + [value for source in args.package_source for value in ("--package-source", source)],
     )

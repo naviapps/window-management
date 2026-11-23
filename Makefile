@@ -2,9 +2,11 @@ SWIFT_STRICT_FLAGS := -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-a
 
 .DEFAULT_GOAL := check
 
-.PHONY: check check-distribution build build-release format lint test test-consumer test-installed-consumers native native-verify test-rust test-docs test-dotnet test-c test-windows-tool
+.PHONY: check check-source test-managed check-distribution build build-release format lint test test-consumer test-installed-consumers native native-verify test-rust test-docs test-dotnet test-c test-windows-tool
 
-check: check-distribution test test-consumer
+check: check-source test test-consumer
+
+check-source: lint test-rust test-managed
 
 check-distribution: lint native-verify build-release test-rust test-docs test-windows-tool
 
@@ -50,3 +52,6 @@ test-docs:
 
 test-windows-tool:
 	python3 -B -m unittest discover -s tools/tests -v
+
+test-managed:
+	dotnet build --configuration Release bindings/dotnet/tests/NaviApps.WindowManagement.Tests/NaviApps.WindowManagement.Tests.csproj
