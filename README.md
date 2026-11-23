@@ -292,8 +292,9 @@ package requires one tooling revision that verifies every selected receipt.
 
 ### Owned platform acceptance
 
-GitHub Actions runs strict Swift tests against the tracked framework on macOS 26
-with Xcode 26.6. The Xcode 27 job also verifies Rust, Swift, C and .NET consumers.
+GitHub Actions runs the same strict Swift tests and standalone Swift consumer
+against the tracked framework on macOS 26 and 27. A separate Xcode 27 job verifies
+SDK distribution and the Rust, C and .NET consumers.
 In an owned ephemeral VM, `OwnedWindowListRuntimeTests` covers fixture-owned windows,
 ordering, transparent-front-window hits and reads after closure. With
 `WINDOW_MANAGEMENT_RUN_OWNED_CG_TESTS=1`, `NAVI_CI_OWNED_VM=1` and controller source

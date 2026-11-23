@@ -11,7 +11,38 @@ concurrency:
   group: macos-sdk-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  macos:
+  swift:
+    name: Swift checks (macOS ${{ matrix.macos }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - macos: "26"
+            runner: macos-26
+            xcode: /Applications/Xcode_26.6.app/Contents/Developer
+          - macos: "27"
+            runner: xcode-27
+            xcode: /Applications/Xcode_27.2.app/Contents/Developer
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: ${{ matrix.xcode }}
+      GIT_TERMINAL_PROMPT: "0"
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+      - name: Check Swift toolchain
+        run: |
+          sw_vers
+          xcrun swift --version
+      - name: Test Swift SDK
+        run: xcrun swift test -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
+      - name: Test standalone Swift consumer
+        run: python3 -B tools/consumer.py
+
+  distribution:
+    name: SDK distribution checks
     runs-on: xcode-27
     timeout-minutes: 45
     env:
@@ -34,20 +65,4 @@ jobs:
       - name: Fetch locked Rust dependencies
         run: mise exec -- cargo fetch --locked
       - name: Validate SDK and consumers
-        run: mise exec -- make check test-installed-consumers test-c test-dotnet
-
-  macos-26:
-    name: macOS 26 compatibility
-    runs-on: macos-26
-    timeout-minutes: 20
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
-      GIT_TERMINAL_PROMPT: "0"
-    steps:
-      - uses: actions/checkout@v6.1.0
-        with:
-          persist-credentials: false
-      - name: Check Swift toolchain
-        run: xcrun swift --version
-      - name: Test Swift compatibility
-        run: xcrun swift test -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
+        run: mise exec -- make check-distribution test-installed-consumers test-c test-dotnet
