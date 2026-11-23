@@ -958,7 +958,7 @@
   "inputs": {
     "Cargo.lock": "03684971ce6759716893ab23d2ff75ec1e201bd6acefde07d7c13fd4313a5a9a",
     "Cargo.toml": "1b11344fede92cd34275f7492f13ca3abfcc4ca2bc461cae3a14b4d4e6aa8045",
-    "LICENSE": "b39443ebe1456bafd85250f7b01f85f3b4807b7db9e445298f2c442e020b6265",
+    "LICENSE": "e18e92825e5b064c568d67d636729c2d8669b61ea9d68b0fa5283b713d70aab1",
     "ThirdParty/Rust/COPYRIGHT": "172020dbfd5b53a226dfde77616190a48dcff519b0bc0e6deb91a8450782c4af",
     "ThirdParty/Rust/COPYRIGHT-library.html": "5647be074c8edf7339fd863055923a8fc80bc5610a8d4661ec3b767b9d392c27",
     "ThirdParty/Rust/LICENSE-APACHE": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
@@ -1024,12 +1024,12 @@
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Headers": "036ae9446c4f0c59046671d1d96e2de4f606b340d8a5c1927b2d51bc293e0365",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Modules": "278b6b2d8f8418e2e4877a67a109b6e3865174e4fa7405870a643e95cbc2f783",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Resources": "c213ee8e9c523538d862da3e5716b64bf090f6a1be08914954ae33cfbda7dbb2",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/CWindowManagement": "7602aee7160c357b0ef6153fc46cd344402dbc645a3140d41a400a9d2deeec99",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/CWindowManagement": "ba7f2d04d6d30b1e1b9616580a322e1b1f7dfe49f1e2bd6ba2ba1b804decf3ac",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Headers/window_management.h": "ceb0686d0c9489d50aab94bcd6e7c2a74e95510145c57138cfc6879184c2a3ea",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Modules/module.modulemap": "9a90fee9233f0ba1a600f5d3b6350d31d21aa7e14fd70a1bf07b1e9add05b618",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/Info.plist": "135546d1e47c03050007a8692507e8d2a0273fa0cdcfb4745f8f4c0e58b65dd0",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/ThirdPartyNotices.txt": "371802c99a439c832a06adc47951307bef132f078adcaa9892c7f52388ec8d75",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/_CodeSignature/CodeResources": "04646c2e0b259e4141cff1631aee7e7a4f9c473ea718702b1982319ba167db68",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/ThirdPartyNotices.txt": "98fd0542cf941aa32f86dc85151efa203a082ec5c2b2e451f6697cef1a2f790f",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/_CodeSignature/CodeResources": "baf4d9ccade94efca8e71dfaa68f1d4764e1e4ef7c1835f4dda603f41d7b3636",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/Current": "ee26006c07174064a7bed9b283a8b016d74a295e05c4e23a1846538d69b23c5f"
   },
   "productionSources": [
