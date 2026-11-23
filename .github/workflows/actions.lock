@@ -18,10 +18,16 @@ dependencies:
         commit: 'sha1-a98b56852c35b8e3190ac28c8c2271da59106c68'
         owner_id: 44036562
         repo_id: 192625306
+    'actions/setup-python@v7.1.0':
+        ref: 'v7.1.0'
+        commit: 'sha1-6d4fd22b20465ccc0f7354476588e8df7c9ca0e0'
+        owner_id: 44036562
+        repo_id: 192625525
     'naviapps/sdk-tooling@main':
         ref: 'main'
-        commit: 'sha1-213f58bc1505f57b5768e7d1eed94a48487d31d0'
+        commit: 'sha1-09188f7b3283fbd27d250a2b7345c81d5bf8c527'
         owner_id: 14840203
         repo_id: 1439873358
         uses:
             - 'actions/setup-dotnet@v6.0.0'
+            - 'actions/setup-python@v7.1.0'

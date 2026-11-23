@@ -21,13 +21,4 @@ jobs:
           persist-credentials: false
       - uses: naviapps/sdk-tooling/.github/actions/test-rust-windows@main
         with:
-          dotnet: "true"
-      - name: Build native binding library
-        run: cargo build --locked -p window-management-ffi
-      - name: Test .NET bindings
-        run: |
-          $output = Join-Path $env:RUNNER_TEMP 'NaviApps.WindowManagement.Tests'
-          dotnet build bindings/dotnet/tests/NaviApps.WindowManagement.Tests/NaviApps.WindowManagement.Tests.csproj --configuration Release --output $output
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Copy-Item "target/$env:CARGO_BUILD_TARGET/debug/window_management_ffi.dll" $output
-          dotnet (Join-Path $output 'NaviApps.WindowManagement.Tests.dll')
+          test-bindings: "true"

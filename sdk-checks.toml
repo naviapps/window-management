@@ -15,6 +15,9 @@ abi_fixture = "crates/ffi/tests/c/abi.c"
 dotnet_project = "bindings/dotnet/tests/NaviApps.WindowManagement.Tests/NaviApps.WindowManagement.Tests.csproj"
 windows_x64 = true
 
+[windows_bindings]
+packages = ["window-management-ffi"]
+
 [nuget]
 package_id = "NaviApps.WindowManagement"
 fixtures = [
