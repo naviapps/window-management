@@ -53,6 +53,7 @@ class WindowsToolsTests(unittest.TestCase):
                     patch.object(sys, "platform", "win32"),
                     patch.dict(os.environ, {"DOTNET_HOST_PATH": "host default"}, clear=True),
                     patch.object(build, "load", return_value=backend),
+                    patch.object(build, "support_inputs", return_value={}),
                     patch.object(build, "builder", return_value=native),
                     patch.object(build.subprocess, "check_output", return_value="10.0.403\n"),
                     patch.object(build.subprocess, "run") as run,

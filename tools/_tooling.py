@@ -16,19 +16,23 @@ sys.dont_write_bytecode = True
 
 
 def git(root, *args):
-    return subprocess.check_output(
-        [
-            "git",
-            "-c",
-            "core.hooksPath=" + os.devnull,
-            "-C",
-            str(root),
-            *args,
-        ],
-        env=dict(os.environ, GIT_NO_REPLACE_OBJECTS="1", GIT_NO_LAZY_FETCH="1"),
-        stderr=subprocess.PIPE,
-        timeout=60,
-    )
+    command = ["git", "-c", "core.hooksPath=" + os.devnull]
+    if root is not None:
+        command += ["-C", str(root)]
+    try:
+        return subprocess.check_output(
+            command + list(args),
+            env=dict(
+                os.environ,
+                GIT_TERMINAL_PROMPT="0",
+                GIT_NO_REPLACE_OBJECTS="1",
+                GIT_NO_LAZY_FETCH="1",
+            ),
+            stderr=subprocess.PIPE,
+            timeout=60,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        raise RuntimeError("SDK source Git operation failed") from None
 
 
 def _verified_source():
