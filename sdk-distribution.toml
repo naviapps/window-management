@@ -2,7 +2,6 @@
 commands = [
   ["cargo", "fetch", "--locked"],
   ["make", "check-distribution"],
-  ["sdk-tooling", "swift-consumer", "--distribution"],
 ]
 
 [windows]
