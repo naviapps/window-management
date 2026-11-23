@@ -1,0 +1,17 @@
+[package]
+name = "window-management-ffi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+serde_json.workspace = true
+window-management = { path = "../core" }
+
+[target.'cfg(windows)'.dependencies]
+window-management-windows = { path = "../windows" }

@@ -1,0 +1,11 @@
+[package]
+name = "window-management-git-consumer"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# The producer supplies the exact SDK revision to this independent workspace.
+[workspace]
+
+[dependencies]
+window-management = { git = "https://github.com/naviapps/window-management.git", rev = "@SDK_REVISION@" }

@@ -1,0 +1,3 @@
+# actionlint 1.7.12 predates the GitHub-hosted Xcode 27 image.
+self-hosted-runner:
+  labels: [xcode-27]

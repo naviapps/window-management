@@ -1,0 +1,56 @@
+name: macOS SDK checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run complete checks with anonymously accessible SDK dependencies
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: macos-sdk-${{ github.ref }}-${{ inputs.full || false }}
+  cancel-in-progress: true
+jobs:
+  macos:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+      GIT_TERMINAL_PROMPT: "0"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Check Swift toolchain
+        run: xcrun swift --version
+      # These tests use only the current repository and public dependencies.
+      - name: Check and test Rust while the SDK is private
+        if: github.event.repository.private && !inputs.full
+        run: |
+          cargo fetch --locked
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+          cargo test --workspace --locked --offline
+      - name: Test Swift adapters while the SDK is private
+        if: github.event.repository.private && !inputs.full
+        run: xcrun swift test -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
+      - name: Install tools for standalone consumers and artifacts
+        if: ${{ !github.event.repository.private || inputs.full }}
+        uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+        with:
+          version: "2026.11.12"
+          cache: false
+          add_shims_to_path: false
+      - name: Fetch locked Rust dependencies
+        if: ${{ !github.event.repository.private || inputs.full }}
+        run: mise exec -- cargo fetch --locked
+      - name: Validate SDK and consumers with public dependencies
+        if: ${{ !github.event.repository.private || inputs.full }}
+        run: mise exec -- make check test-installed-consumers test-c test-dotnet

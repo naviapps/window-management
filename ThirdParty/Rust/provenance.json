@@ -1,0 +1,31 @@
+{
+  "component": "Rust runtime and standard library",
+  "files": {
+    "COPYRIGHT": {
+      "bytes": 1571,
+      "sha256": "172020dbfd5b53a226dfde77616190a48dcff519b0bc0e6deb91a8450782c4af"
+    },
+    "COPYRIGHT-library.html": {
+      "bytes": 1499465,
+      "sha256": "5647be074c8edf7339fd863055923a8fc80bc5610a8d4661ec3b767b9d392c27"
+    },
+    "LICENSE-APACHE": {
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    },
+    "LICENSE-MIT": {
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    }
+  },
+  "provenance": {
+    "kind": "public-source-manifest",
+    "repository": "https://github.com/rust-lang/rust",
+    "revision": "58cf8f9c35b355199727627d07ae34a4e2846d67",
+    "sourceArchiveSHA256": "23948a0a9c162fd2952defb3fb0462c44e8fcfd1a4ab8a274a1e1bdb2cf810a3",
+    "sourceArchiveURL": "https://static.rust-lang.org/dist/2026-10-15/rustc-1.99.1-aarch64-apple-darwin.tar.xz",
+    "sourceManifestSHA256": "4ce8386132cca38c946271cfe3cbcc82ae1ae545d6eac11c3ec63663ae9caf9b"
+  },
+  "schemaVersion": 1,
+  "version": "1.99.1"
+}
