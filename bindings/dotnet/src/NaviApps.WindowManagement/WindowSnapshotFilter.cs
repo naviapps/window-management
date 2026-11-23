@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 namespace NaviApps.WindowManagement;
 
 /// <summary>Immutable Rust-owned snapshot selection. All nonempty include sets must
@@ -16,15 +17,13 @@ public sealed class WindowSnapshotFilter : IDisposable
         IEnumerable<string>? excludedOwnerApplicationIdentifiers = null,
         IEnumerable<long>? excludedOwnerProcessIdentifiers = null,
         IEnumerable<ulong>? excludedWindowIdentifiers = null)
-        : this(JsonSerializer.SerializeToUtf8Bytes(new
-        {
-            includedOwnerApplicationIdentifiers = CaptureIdentifiers(includedOwnerApplicationIdentifiers),
-            includedOwnerProcessIdentifiers = includedOwnerProcessIdentifiers?.ToArray() ?? [],
-            includedWindowIdentifiers = includedWindowIdentifiers?.ToArray() ?? [],
-            excludedOwnerApplicationIdentifiers = CaptureIdentifiers(excludedOwnerApplicationIdentifiers),
-            excludedOwnerProcessIdentifiers = excludedOwnerProcessIdentifiers?.ToArray() ?? [],
-            excludedWindowIdentifiers = excludedWindowIdentifiers?.ToArray() ?? [],
-        }))
+        : this(JsonSerializer.SerializeToUtf8Bytes(new WindowFilterInput(
+            CaptureIdentifiers(includedOwnerApplicationIdentifiers),
+            includedOwnerProcessIdentifiers?.ToArray() ?? [],
+            includedWindowIdentifiers?.ToArray() ?? [],
+            CaptureIdentifiers(excludedOwnerApplicationIdentifiers),
+            excludedOwnerProcessIdentifiers?.ToArray() ?? [],
+            excludedWindowIdentifiers?.ToArray() ?? []), WindowFilterJson.Default.WindowFilterInput))
     { }
     private WindowSnapshotFilter(ReadOnlySpan<byte> data)
     {
@@ -69,3 +68,15 @@ public sealed class WindowSnapshotFilter : IDisposable
     /// <summary>Release the compiled selector. Concurrent native queries retain their SafeHandle borrow.</summary>
     public void Dispose() => owner.Dispose();
 }
+
+internal sealed record WindowFilterInput(
+    string[] IncludedOwnerApplicationIdentifiers,
+    long[] IncludedOwnerProcessIdentifiers,
+    ulong[] IncludedWindowIdentifiers,
+    string[] ExcludedOwnerApplicationIdentifiers,
+    long[] ExcludedOwnerProcessIdentifiers,
+    ulong[] ExcludedWindowIdentifiers);
+
+[JsonSerializable(typeof(WindowFilterInput))]
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+internal sealed partial class WindowFilterJson : JsonSerializerContext;

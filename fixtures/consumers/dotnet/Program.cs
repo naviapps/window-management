@@ -1,15 +1,26 @@
 using NaviApps.WindowManagement;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+
+AppContext.SetSwitch("System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault", false);
+if (JsonSerializer.IsReflectionEnabledByDefault)
+    throw new InvalidOperationException("The installed fixture requires reflection-free JSON.");
+
 using var filter = WindowSnapshotFilter.FromJsonUtf8("""
     {"includedOwnerProcessIdentifiers":[12,-9223372036854775808],"includedWindowIdentifiers":[42,18446744073709551615]}
     """u8);
 var snapshot = JsonSerializer.Deserialize<WindowSnapshot>("""
     {"Identity":{"Handle":18446744073709551615,"ProcessId":12,"ThreadId":13},
     "Frame":{"X":100,"Y":100,"Width":-80,"Height":-60},"Title":"owned","IsMinimized":false,"IsMaximized":false}
-    """) ?? throw new InvalidOperationException("Could not restore the packaged snapshot.");
+    """, WindowConsumerJson.Default.WindowSnapshot) ?? throw new InvalidOperationException("Could not restore the packaged snapshot.");
 if (!filter.Includes(snapshot) || snapshot.Frame != new Rect(20, 40, 80, 60)
     || !snapshot.Contains(20, 40) || snapshot.Contains(100, 40))
     throw new InvalidOperationException("Packaged snapshot selector failed.");
+using var typedFilter = new WindowSnapshotFilter(includedOwnerApplicationIdentifiers: ["owned.日本"],
+    includedOwnerProcessIdentifiers: [12, long.MinValue], includedWindowIdentifiers: [42, ulong.MaxValue]);
+using var savedFilter = WindowSnapshotFilter.FromJson(typedFilter.ToJson());
+if (!savedFilter.Includes(snapshot, "owned.日本") || savedFilter.Includes(snapshot))
+    throw new InvalidOperationException("Packaged typed filter failed with JSON reflection disabled.");
 if (WindowHitTestResult.Hit(snapshot).Snapshot != snapshot ||
     WindowHitTestResult.Miss(WindowHitTestMissReason.NoMatchingWindowAtPoint).Snapshot is not null)
     throw new InvalidOperationException("Packaged point-query result projection failed.");
@@ -31,7 +42,7 @@ var displays = new Display[] {
     JsonSerializer.Deserialize<Display>("""
         {"Frame":{"X":400,"Y":200,"Width":-300,"Height":-300},
         "VisibleFrame":{"X":400,"Y":200,"Width":-300,"Height":-280},"Identifier":2,"IsMain":false}
-        """),
+        """, WindowConsumerJson.Default.Display),
     new(new(-400,-100,200,300),new(-400,-100,200,300),1,true),
 };
 var spanning = new Rect(-250, -50, 450, 100);
@@ -44,3 +55,7 @@ if (Geometry.ResolveMovement(new(DisplayCycleDirection.Next), spanning, displays
 var coincident = new Display[] { new(new(0, 0, 100, 100), default, 1, false), new(new(-0.0, -0.0, 100, 100), default, 9, false) };
 if (Geometry.SelectDisplay(DisplayTarget.Point(10, 10), default, coincident, false) != coincident[0])
     throw new InvalidOperationException("Packaged selection did not break a signed-zero display tie by identifier.");
+
+[JsonSerializable(typeof(WindowSnapshot))]
+[JsonSerializable(typeof(Display))]
+internal sealed partial class WindowConsumerJson : JsonSerializerContext;

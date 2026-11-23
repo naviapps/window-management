@@ -90,8 +90,16 @@ checks cannot establish arbitrary pointer validity.
 
 .NET 10 consumers use `NaviApps.WindowManagement` from a private/local NuGet feed.
 The package carries its selected native runtimes; consumers need no Rust or MSVC
-toolchain. Windows packages use `win-x64`. On Windows 11 ARM64, run the installed
-package in an x64 .NET process under emulation.
+toolchain. To add a package from a local feed in an existing project, replace the
+feed path and use the version of the package you received.
+
+```sh
+dotnet add package NaviApps.WindowManagement --version 0.1.0 --source /path/to/nuget-feed
+```
+
+The package must include the runtime used by your app. On macOS the native
+assets are `osx-arm64` or `osx-x64`. Windows packages use `win-x64`. On Windows 11
+ARM64, run the installed package in an x64 .NET process under emulation.
 
 Keep the managed package and native runtime assets from the same SDK build. Private
 feed publication is separate from CI or local package generation. See the
@@ -305,7 +313,9 @@ mise run sdk-tooling -- nuget-consumer .native-build/packages/NaviApps.WindowMan
 ```
 
 The package fixture in `fixtures/consumers/dotnet/Program.cs` runs after
-receipt and byte checks in an isolated restore. `--package-source <directory>` selects a
+receipt and byte checks in an isolated restore. JSON reflection is disabled, so
+the installed fixture checks that typed snapshot filters and Rust-owned codecs
+work without it. `--package-source <directory>` selects a
 private/local feed; `nuget-consumer --dependency <nupkg>` adds dependencies to its empty
 feed. No feed is published. Cross-OS packing checks provenance, while Mach-O/signature
 inspection must happen on macOS. The shared distribution workflow's macOS job
