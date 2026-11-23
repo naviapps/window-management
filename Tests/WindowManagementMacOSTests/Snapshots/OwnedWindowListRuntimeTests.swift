@@ -11,16 +11,26 @@ final class OwnedWindowListRuntimeTests: XCTestCase {
     guard environment["WINDOW_MANAGEMENT_RUN_OWNED_CG_TESTS"] == "1" else {
       throw XCTSkip("Owned Core Graphics acceptance requires explicit opt-in in an isolated VM.")
     }
-    guard environment["NAVI_CI_OWNED_VM"] == "1" else {
-      throw OwnedCGFailure.environment("NAVI_CI_OWNED_VM=1 is required for owned window acceptance")
+    func runnerValue(_ name: String, legacyName: String? = nil) throws -> String? {
+      let current = environment["VM_RUNNER_" + name]
+      let legacy = environment["NAVI_CI_" + (legacyName ?? name)]
+      if let current, let legacy, current != legacy {
+        throw OwnedCGFailure.environment("Conflicting VM Runner \(name) settings")
+      }
+      return current ?? legacy
     }
-    guard let sourceCommit = environment["NAVI_CI_SOURCE_COMMIT"],
+    guard try runnerValue("OWNED_VM") == "1" else {
+      throw OwnedCGFailure.environment(
+        "VM_RUNNER_OWNED_VM=1 is required for owned window acceptance")
+    }
+    guard let sourceCommit = try runnerValue("SOURCE_COMMIT"),
       sourceCommit.range(of: "^[a-f0-9]{40}$", options: .regularExpression) != nil,
-      let sourceFingerprint = environment["NAVI_CI_SOURCE_FINGERPRINT"],
+      let sourceFingerprint = try runnerValue("SOURCE_FINGERPRINT"),
       sourceFingerprint.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil
     else {
       throw OwnedCGFailure.environment("The captured source commit and fingerprint are required")
     }
+    let artifacts = try runnerValue("ARTIFACTS_DIR", legacyName: "ARTIFACTS")
     guard let screen = NSScreen.screens.first, screen.visibleFrame.width >= 320,
       screen.visibleFrame.height >= 240
     else {
@@ -217,11 +227,11 @@ final class OwnedWindowListRuntimeTests: XCTestCase {
         "activationPolicyRestored": application.activationPolicy() == previousPolicy,
       ]
       evidence["result"] = "passed"
-      try writeEvidence(evidence, environment: environment)
+      try writeEvidence(evidence, artifacts: artifacts)
     } catch {
       evidence["result"] = "failed"
       evidence["failure"] = String(describing: error)
-      try? writeEvidence(evidence, environment: environment)
+      try? writeEvidence(evidence, artifacts: artifacts)
       throw error
     }
   }
@@ -312,10 +322,10 @@ final class OwnedWindowListRuntimeTests: XCTestCase {
     evidence["observations"] = observations
   }
 
-  private func writeEvidence(_ evidence: [String: Any], environment: [String: String]) throws {
+  private func writeEvidence(_ evidence: [String: Any], artifacts: String?) throws {
     let data = try JSONSerialization.data(withJSONObject: evidence, options: [.sortedKeys])
     print("WINDOW_MANAGEMENT_OWNED_CG " + String(decoding: data, as: UTF8.self))
-    if let directory = environment["NAVI_CI_ARTIFACTS"] {
+    if let directory = artifacts, !directory.isEmpty {
       guard directory.hasPrefix("/") else {
         throw OwnedCGFailure.environment("The owned CG artifact directory must be absolute")
       }

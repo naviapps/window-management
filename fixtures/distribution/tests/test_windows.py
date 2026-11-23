@@ -124,7 +124,10 @@ class WindowsToolsTests(unittest.TestCase):
 
                 options = [] if desktop else ["--skip-desktop"]
                 (native.parent.parent / "desktop-acceptance").mkdir(parents=True)
-                env = {"NAVI_CI_ARTIFACTS": str(output), "DOTNET_BIN": str(root / "dotnet.exe")}
+                env = {
+                    "VM_RUNNER_ARTIFACTS_DIR": str(output),
+                    "DOTNET_BIN": str(root / "dotnet.exe"),
+                }
                 backend = Mock()
                 backend.host_architecture.return_value = "arm64"
                 tooling = Mock()

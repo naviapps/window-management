@@ -9,6 +9,7 @@ workflows:
     '.github/workflows/check-windows.yml':
         - 'actions/checkout@v6.1.0'
         - 'actions/setup-dotnet@v6.0.0'
+        - 'naviapps/sdk-tooling@0b6738f73b1b7081f75c212a79efeaf5ee62a92c'
 dependencies:
     'actions/checkout@v6.1.0':
         ref: 'v6.1.0'
@@ -25,3 +26,8 @@ dependencies:
         commit: 'sha1-924e7c586e33d7d4bae9c14e26c5d22e2beb6e78'
         owner_id: 216188
         repo_id: 738284564
+    'naviapps/sdk-tooling@0b6738f73b1b7081f75c212a79efeaf5ee62a92c':
+        ref: 'main'
+        commit: 'sha1-0b6738f73b1b7081f75c212a79efeaf5ee62a92c'
+        owner_id: 14840203
+        repo_id: 1439873358

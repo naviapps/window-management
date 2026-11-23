@@ -11,6 +11,7 @@ import sys
 import tomllib
 from pathlib import Path
 
+from sdk_tooling import vm_environment as vm
 from sdk_tooling.adapters import load, python_command, support_inputs
 
 from fixtures.distribution._windows import RID
@@ -25,11 +26,10 @@ def main(root=None, argv=None):
         help="Run ABI and package acceptance without a separate desktop fixture",
     )
     args = parser.parse_args(argv)
-    destination = os.environ.get("NAVI_CI_ARTIFACTS")
-    if sys.platform != "win32" or not destination:
+    output = vm.artifacts_dir()
+    if sys.platform != "win32" or output is None:
         raise SystemExit("Use the owned Windows CI worker; artifact ownership must be explicit.")
     inputs = support_inputs(root)
-    output = Path(destination)
     output.mkdir(parents=True, exist_ok=True)
     workspace = tomllib.loads((root / "Cargo.toml").read_text())
     if not Path(os.environ.get("DOTNET_BIN", "")).is_absolute():

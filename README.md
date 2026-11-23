@@ -258,12 +258,12 @@ public SDK Tooling CLI pinned in [mise.toml](mise.toml):
 mise exec -- make check-distribution
 ```
 
-To run the hosted macOS and Windows distribution checks, set `SDK_COMMIT_SHA`
-to the full SDK commit SHA from `main` and dispatch the workflow:
+Run the hosted macOS and Windows distribution checks from the SDK checkout at
+the intended commit on `main`:
 
 ```sh
 gh workflow run check-sdk-distribution.yml -R naviapps/sdk-tooling \
-  -f sdk=window-management -f revision="$SDK_COMMIT_SHA"
+  -f sdk=window-management -f "revision=$(git rev-parse HEAD)"
 ```
 
 ### Consumers, artifacts and packages
@@ -314,7 +314,7 @@ runs Rust and .NET binding tests. SDK Tooling verifies the distribution and
 runs the installed Rust, C and .NET consumers in its macOS distribution job.
 In an owned ephemeral VM, `OwnedWindowListRuntimeTests` covers fixture-owned windows,
 ordering, transparent-front-window hits and reads after closure. With
-`WINDOW_MANAGEMENT_RUN_OWNED_CG_TESTS=1`, `NAVI_CI_OWNED_VM=1` and controller source
+`WINDOW_MANAGEMENT_RUN_OWNED_CG_TESTS=1`, `VM_RUNNER_OWNED_VM=1` and controller source
 commit/fingerprint variables retained, run
 `mise exec -- swift test --filter OwnedWindowListRuntimeTests`. The fixture records
 whether WindowServer lists the transparent window and changes no permissions/settings.
