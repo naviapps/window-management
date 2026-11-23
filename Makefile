@@ -4,7 +4,7 @@ SWIFT_STRICT_FLAGS := -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-a
 
 .PHONY: check build build-release format lint test test-consumer test-installed-consumers native native-verify test-rust test-docs test-dotnet test-c test-windows-tool
 
-check: lint native-verify build build-release test test-consumer test-rust test-docs test-windows-tool
+check: lint native-verify build-release test test-consumer test-rust test-docs test-windows-tool
 
 build:
 	swift build $(SWIFT_STRICT_FLAGS)
@@ -34,7 +34,6 @@ native-verify:
 	python3 tools/native.py --verify
 
 test-rust:
-	cargo fmt --all -- --check
 	cargo clippy --workspace --all-targets --locked --offline -- -D warnings
 	cargo test --workspace --locked --offline
 

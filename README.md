@@ -1,6 +1,6 @@
 # WindowManagement
 
-Private Rust-backed window geometry, display selection and native window management.
+Rust-backed window geometry, display selection and native window management.
 Swift/AppKit and .NET adapters share the same deterministic core. Hosts own permission
 onboarding, product policy, persistence and UI.
 
@@ -18,8 +18,7 @@ onboarding, product policy, persistence and UI.
 Add `https://github.com/naviapps/window-management.git` to a Swift package and pin
 its full commit ID. Select `WindowManagement` for values/codecs or
 `WindowManagementMacOS` for native macOS control. The tracked XCFramework needs no
-Rust build on the consumer's machine. Configure authenticated Git access to the
-private repository before resolution; the package contains no credentials.
+Rust build on the consumer's machine.
 
 For example, a Swift 6.4 client on macOS 26 can use this complete manifest. Replace
 `FULL_40_CHARACTER_PUBLISHED_COMMIT_ID` with the chosen published SDK revision:
@@ -60,9 +59,8 @@ Git revision. Replace the revision placeholder with the chosen 40-character SHA:
 window-management = { git = "https://github.com/naviapps/window-management.git", rev = "FULL_40_CHARACTER_PUBLISHED_COMMIT_ID" }
 ```
 
-Configure private Git access before resolution. The client uses its own `Cargo.lock`
-and the Rust toolchain for its target; it needs no SDK framework or developer
-tooling. `window-management-windows` is the separate Win32 adapter. The workspace
+The client uses its own `Cargo.lock` and the Rust toolchain for its target.
+`window-management-windows` is the separate Win32 adapter. The workspace
 declares Rust 1.85; the installed consumer gate uses the pinned Rust 1.99.1 and
 does not establish build or runtime support at the declared minimum.
 
@@ -227,7 +225,7 @@ mise exec -- make check
 
 The fetch prepares the producer cache for locked offline Rust checks. Developer entry
 points use the immutable `sdk-tooling` pin; see its [setup](https://github.com/naviapps/sdk-tooling#readme)
-for authenticated access, verified caches and offline/source overrides. Shared guides
+for verified caches and offline/source overrides. Shared guides
 own [quality tools](https://github.com/naviapps/sdk-tooling/blob/main/docs/REFERENCE.md#quality-and-documentation-checks),
 [native receipt mechanisms](https://github.com/naviapps/sdk-tooling/blob/main/docs/REFERENCE.md#native-artifacts-and-provenance)
 and [consumer isolation](https://github.com/naviapps/sdk-tooling/blob/main/docs/REFERENCE.md#consumer-verification).
@@ -235,15 +233,15 @@ Ordinary SwiftPM/C/NuGet consumers do not need developer setup.
 
 Use `mise exec -- make <target>` so pinned tools remain available in temporary clients.
 
-| Target                     | SDK coverage                                                                                             |
-| -------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `check`                    | Lint, framework verification, strict debug/release Swift builds and tests, Swift consumer, Rust and DocC |
-| `test-rust`                | Formatting, Clippy and workspace tests with `--locked --offline`                                         |
-| `test-docs`                | Both catalogs against public symbol graphs, warnings as errors                                           |
-| `test-consumer`            | Both Swift products installed with synthetic providers                                                   |
-| `test-installed-consumers` | Independent Rust Git client and installed-framework C client                                             |
-| `test-c` / `test-dotnet`   | Native C / managed boundary fixtures against the framework                                               |
-| `native` / `native-verify` | Rebuild / verify the universal macOS framework and receipt                                               |
+| Target                     | SDK coverage                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `check`                    | Lint, framework verification, strict Swift tests and release build, Swift consumer, Rust and DocC |
+| `test-rust`                | Clippy and workspace tests with `--locked --offline`                                              |
+| `test-docs`                | Both catalogs against public symbol graphs, warnings as errors                                    |
+| `test-consumer`            | Both Swift products installed with synthetic providers                                            |
+| `test-installed-consumers` | Independent Rust Git client and installed-framework C client                                      |
+| `test-c` / `test-dotnet`   | Native C / managed boundary fixtures against the framework                                        |
+| `native` / `native-verify` | Rebuild / verify the universal macOS framework and receipt                                        |
 
 `mise run lint` checks owned source; `mise run format` formats it. `DOTNET_BIN` selects
 an existing .NET executable. Native acceptance is separate from compilation and tests.
@@ -260,7 +258,7 @@ synthetic providers, including failure before frame access with no displays. It 
 queries or controls desktop windows; the installed tree contains no Rust or SDK tooling.
 
 `test-installed-consumers` requires a clean committed checkout, pinned Rust and Xcode on
-macOS. A local Git mirror replaces private Git access. The Rust client fetches registry
+macOS. The Rust client uses a local Git mirror and fetches registry
 dependencies into a fresh cache before locked offline checks; the C client uses the
 copied framework/header. Both test synthetic placement and missing-display fallback.
 For shallow checkouts, pass a complete repository/bundle with
@@ -295,8 +293,7 @@ package requires one tooling revision that verifies every selected receipt.
 ### Owned platform acceptance
 
 The GitHub-hosted Xcode 27 workflow runs Rust and strict Swift tests against the
-tracked framework. Full checks also verify the Swift, Rust, C and .NET consumers
-once the pinned tooling is publicly accessible.
+tracked framework and verifies standalone Swift, Rust, C and .NET consumers.
 In an owned ephemeral VM, `OwnedWindowListRuntimeTests` covers fixture-owned windows,
 ordering, transparent-front-window hits and reads after closure. With
 `WINDOW_MANAGEMENT_RUN_OWNED_CG_TESTS=1`, `NAVI_CI_OWNED_VM=1` and controller source
@@ -321,9 +318,8 @@ to control and close a separate owned x64 Win32 window compiled from Rust and
 records the host and managed process architecture.
 `--build-only` prepares the x64 DLL and receipt without running the fixtures.
 
-The GitHub-hosted Windows x64 workflow runs Rust and tool tests. Once it can
-fetch the tooling anonymously, the full gate adds C, .NET and NuGet package
-checks. Run the separate `--desktop` fixture on an owned Windows desktop.
+The GitHub-hosted Windows x64 workflow runs Rust, tooling, C, .NET and NuGet
+package checks. Run the separate `--desktop` fixture on an owned Windows desktop.
 
 The [selection benchmark](https://github.com/naviapps/window-management/blob/main/crates/core/examples/selection_benchmark.rs) runs with
 `mise exec -- cargo run -p window-management --example selection_benchmark --release --locked --offline`.
