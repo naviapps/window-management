@@ -101,15 +101,17 @@ class WindowsToolsTests(unittest.TestCase):
                     list(windows_delivery.locked_fetch_args()),
                 )
 
-    def test_hosted_evidence_contains_only_the_installed_x64_package(self):
-        for changed, desktop in (
-            (None, True),
-            (None, False),
-            ("package", False),
-            ("support", False),
+    def test_evidence_contains_native_outputs_and_only_accepted_packages(self):
+        for changed, desktop, native_only in (
+            (None, True, False),
+            (None, False, False),
+            ("package", False, False),
+            ("support", False, False),
+            (None, False, True),
+            ("support", False, True),
         ):
             with (
-                self.subTest(package_changed=changed, desktop=desktop),
+                self.subTest(changed=changed, desktop=desktop, native_only=native_only),
                 tempfile.TemporaryDirectory() as directory,
             ):
                 root = Path(directory).resolve()
@@ -158,6 +160,8 @@ class WindowsToolsTests(unittest.TestCase):
                             package.write_bytes(b"changed after acceptance")
 
                 options = [] if desktop else ["--skip-desktop"]
+                if native_only:
+                    options.append("--native-only")
                 (native.parent.parent / "desktop-acceptance").mkdir(parents=True)
                 env = {
                     "VM_RUNNER_ARTIFACTS_DIR": str(output),
@@ -203,20 +207,20 @@ class WindowsToolsTests(unittest.TestCase):
                             ci.main(root=root, argv=options)
                     else:
                         ci.main(root=root, argv=options)
-                tooling.command.assert_called_once_with(package)
-                self.assertEqual(
-                    python_command.call_args_list,
-                    [
-                        call(root, checker, *([] if not desktop else ["--desktop"])),
-                        call(root, packer, "--runtime", "win-x64"),
-                    ],
-                )
-                self.assertEqual(seen, [checker, packer, "nuget-consumer"])
+                commands = [call(root, checker, *([] if not desktop else ["--desktop"]))]
+                if native_only:
+                    tooling.command.assert_not_called()
+                    self.assertEqual(seen, [checker])
+                else:
+                    tooling.command.assert_called_once_with(package)
+                    commands.append(call(root, packer, "--runtime", "win-x64"))
+                    self.assertEqual(seen, [checker, packer, "nuget-consumer"])
+                self.assertEqual(python_command.call_args_list, commands)
                 backend.target_dotnet.assert_called_once_with("arm64", "x64", env)
                 expected = {"win-x64", "desktop-acceptance"} if desktop else {"win-x64"}
                 self.assertEqual({p.name for p in (output / "sdk-windows").iterdir()}, expected)
                 published = output / "sdk-packages" / package.name
-                if changed:
+                if changed or native_only:
                     self.assertFalse(published.exists())
                 else:
                     self.assertEqual(published.read_bytes(), b"accepted")

@@ -22,6 +22,7 @@ commands = [
     "windows",
     "distribution/verify_windows.py",
     "--skip-desktop",
+    "--native-only",
   ],
 ]
 

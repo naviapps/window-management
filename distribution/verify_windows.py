@@ -23,7 +23,12 @@ def main(root=None, argv=None):
     parser.add_argument(
         "--skip-desktop",
         action="store_true",
-        help="Run ABI and package acceptance without a separate desktop fixture",
+        help="Skip the separate-process desktop fixture",
+    )
+    parser.add_argument(
+        "--native-only",
+        action="store_true",
+        help="Export the verified native build without packing a standalone Windows NuGet",
     )
     args = parser.parse_args(argv)
     output = vm.artifacts_dir()
@@ -31,7 +36,6 @@ def main(root=None, argv=None):
         raise SystemExit("Use the owned Windows CI worker; artifact ownership must be explicit.")
     inputs = support_inputs(root)
     output.mkdir(parents=True, exist_ok=True)
-    workspace = tomllib.loads((root / "Cargo.toml").read_text())
     if not Path(os.environ.get("DOTNET_BIN", "")).is_absolute():
         raise SystemExit("Set DOTNET_BIN to the absolute x64 .NET SDK executable")
     environment = {key.upper(): value for key, value in os.environ.items()}
@@ -43,16 +47,21 @@ def main(root=None, argv=None):
             [str(value) for value in command], cwd=directory, env=environment, check=True
         )
 
-    version = workspace["workspace"]["package"]["version"]
     build = root / ".native-build"
-    package = build / "packages" / f"NaviApps.WindowManagement.{version}.nupkg"
     native_receipt = build / "windows" / RID / "native-build.json"
-    package_receipt = package.with_suffix(".nupkg.json")
-    accepted = False
+    accepted_packages = ()
     try:
         desktop = [] if args.skip_desktop else ["--desktop"]
         run(python_command(root, "distribution/verify_windows_native.py", *desktop))
         native_digest = hashlib.sha256(native_receipt.read_bytes()).hexdigest()
+        if args.native_only:
+            if inputs != support_inputs(root):
+                raise ValueError("Build support changed during Windows x64 acceptance")
+            return
+        workspace = tomllib.loads((root / "Cargo.toml").read_text())
+        version = workspace["workspace"]["package"]["version"]
+        package = build / "packages" / f"NaviApps.WindowManagement.{version}.nupkg"
+        package_receipt = package.with_suffix(".nupkg.json")
         run(python_command(root, "distribution/pack_nuget.py", "--runtime", RID))
         receipt_bytes = package_receipt.read_bytes()
         receipt = json.loads(receipt_bytes)
@@ -71,7 +80,7 @@ def main(root=None, argv=None):
             or native_digest != hashlib.sha256(native_receipt.read_bytes()).hexdigest()
         ):
             raise ValueError("Windows x64 package changed during installed consumer acceptance")
-        accepted = True
+        accepted_packages = (package, package_receipt)
     finally:
         # Preserve owned native failure evidence too. The host retains these as opaque data.
         directories = (RID,) if args.skip_desktop else (RID, "desktop-acceptance")
@@ -79,11 +88,10 @@ def main(root=None, argv=None):
             source = build / "windows" / name
             if source.is_dir():
                 shutil.copytree(source, output / "sdk-windows" / name)
-        if accepted:
-            for source in (package, package_receipt):
-                destination = output / "sdk-packages" / source.name
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(source, destination)
+        for source in accepted_packages:
+            destination = output / "sdk-packages" / source.name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
 
 
 if __name__ == "__main__":
