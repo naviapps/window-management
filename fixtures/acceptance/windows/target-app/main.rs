@@ -2,12 +2,11 @@
 
 #[cfg(windows)]
 fn main() -> std::io::Result<()> {
-    target::run()
+    window::run()
 }
 
 #[cfg(not(windows))]
 fn main() {}
 
 #[cfg(windows)]
-#[path = "../tests/support/owned_window_target.rs"]
-mod target;
+mod window;

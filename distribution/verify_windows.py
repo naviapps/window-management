@@ -14,11 +14,11 @@ from pathlib import Path
 from sdk_tooling import vm_environment as vm
 from sdk_tooling.adapters import load, python_command, support_inputs
 
-from fixtures.distribution._windows import RID
+from distribution.windows_target import RID
 
 
 def main(root=None, argv=None):
-    root = Path(root or Path(__file__).resolve().parents[2]).resolve()
+    root = Path(root or Path(__file__).resolve().parents[1]).resolve()
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument(
         "--skip-desktop",
@@ -51,9 +51,9 @@ def main(root=None, argv=None):
     accepted = False
     try:
         desktop = [] if args.skip_desktop else ["--desktop"]
-        run(python_command(root, "fixtures/distribution/check-windows.py", *desktop))
+        run(python_command(root, "distribution/verify_windows_native.py", *desktop))
         native_digest = hashlib.sha256(native_receipt.read_bytes()).hexdigest()
-        run(python_command(root, "fixtures/distribution/pack-dotnet.py", "--runtime", RID))
+        run(python_command(root, "distribution/pack_nuget.py", "--runtime", RID))
         receipt_bytes = package_receipt.read_bytes()
         receipt = json.loads(receipt_bytes)
         if (

@@ -13,7 +13,7 @@ concurrency:
 jobs:
   swift:
     name: Swift
-    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@0b6738f73b1b7081f75c212a79efeaf5ee62a92c
+    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@2f938131cb4deae08ce8bf092ebb4dee16723dd1
   contributor:
     name: Source checks
     runs-on: xcode-27

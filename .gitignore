@@ -18,5 +18,7 @@ xcuserdata/
 /.native-build/
 /bindings/dotnet/**/bin/
 /bindings/dotnet/**/obj/
+/fixtures/acceptance/**/bin/
+/fixtures/acceptance/**/obj/
 
 __pycache__/

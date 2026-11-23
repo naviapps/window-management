@@ -204,9 +204,11 @@ or replacement-window fallback. macOS command details belong to the
 ## Repository layout
 
 `crates/` owns Rust, Windows resources and the C ABI; `Sources/` / `Tests/` own Swift
-and DocC. Managed projects live in `bindings/dotnet`, independent clients in `fixtures`,
-and retained frameworks/notices in `Artifacts` / `ThirdParty`. [Native build policy](native.toml)
-selects the framework. `fixtures/distribution` contains this SDK's package and Windows acceptance drivers.
+and DocC. Managed projects live in `bindings/dotnet/` and independent clients in
+`fixtures/consumers/`. The separate-process Windows desktop fixture lives in
+`fixtures/acceptance/windows/`. The [native build policy](native.toml) selects the framework in `Artifacts/`.
+Upstream notices are retained in `ThirdParty/`. Package and Windows acceptance drivers are in
+`distribution/`.
 
 ## Development
 
@@ -294,11 +296,11 @@ in `.native-build/windows/win-x64`; the macOS framework belongs in `Artifacts`. 
 and test a local package on macOS:
 
 ```sh
-mise run sdk-tooling -- python fixtures/distribution/pack-dotnet.py --runtime osx-arm64 --runtime osx-x64
+mise run sdk-tooling -- python distribution/pack_nuget.py --runtime osx-arm64 --runtime osx-x64
 mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 
-The package fixture in `bindings/dotnet/tests/PackageConsumer/Program.cs` runs after
+The package fixture in `fixtures/consumers/dotnet/Program.cs` runs after
 receipt and byte checks in an isolated restore. `--package-source <directory>` selects a
 private/local feed; `binding-consumer nuget --dependency <nupkg>` adds dependencies to its empty
 feed. No feed is published. Cross-OS packing checks provenance, while Mach-O/signature
@@ -325,8 +327,8 @@ pinned in `mise.toml`. Set `DOTNET_BIN` to the absolute x64 executable. Windows 
 builds x64 artifacts and runs the x64 fixtures through Windows emulation:
 
 ```powershell
-mise run sdk-tooling -- python fixtures/distribution/check-windows.py --desktop
-mise run sdk-tooling -- python fixtures/distribution/pack-dotnet.py --runtime win-x64
+mise run sdk-tooling -- python distribution/verify_windows_native.py --desktop
+mise run sdk-tooling -- python distribution/pack_nuget.py --runtime win-x64
 mise run sdk-tooling -- binding-consumer nuget .native-build/packages/NaviApps.WindowManagement.0.1.0.nupkg
 ```
 

@@ -18,6 +18,6 @@ abi_fixture = "crates/ffi/tests/c/abi.c"
 dotnet_project = "bindings/dotnet/tests/NaviApps.WindowManagement.Tests/NaviApps.WindowManagement.Tests.csproj"
 nuget_id = "NaviApps.WindowManagement"
 nuget_fixtures = [
-  "bindings/dotnet/tests/PackageConsumer/Program.cs",
+  "fixtures/consumers/dotnet/Program.cs",
 ]
 windows_x64 = true

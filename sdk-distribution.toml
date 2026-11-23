@@ -16,12 +16,12 @@ commands = [
     "unittest",
     "discover",
     "-s",
-    "fixtures/distribution/tests",
+    "distribution/tests",
   ],
   [
     "sdk-tooling",
     "windows",
-    "fixtures/distribution/check-ci.py",
+    "distribution/verify_windows.py",
     "--skip-desktop",
   ],
 ]

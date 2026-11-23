@@ -12,11 +12,11 @@ from pathlib import Path
 from sdk_tooling.adapters import load, support_inputs
 from sdk_tooling.native_plan import builder
 
-from fixtures.distribution._windows import RID, TARGET
+from distribution.windows_target import RID, TARGET
 
 
 def main(root=None, argv=None):
-    root = Path(root or Path(__file__).resolve().parents[2]).resolve()
+    root = Path(root or Path(__file__).resolve().parents[1]).resolve()
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument(
         "--desktop", action="store_true", help="Run this SDK's separate-process desktop fixture"
@@ -103,12 +103,8 @@ def require_x64_desktop_target(executable):
 
 
 def run_desktop(root, dotnet, env, library, sources, run):
-    project = (
-        root
-        / "bindings/dotnet/tests/WindowManagement.NativeTests/WindowManagement.NativeTests.csproj"
-    )
-    bindings = load("bindings")
-    bindings.build_managed(
+    project = root / "fixtures/acceptance/windows/host/WindowManagement.WindowsAcceptance.csproj"
+    load("dotnet").build_managed(
         dotnet,
         project,
         cwd=root,
@@ -131,7 +127,7 @@ def run_desktop(root, dotnet, env, library, sources, run):
             "-p",
             "window-management-windows",
             "--example",
-            "test_owned_window_target",
+            "window-acceptance-target",
             "--target",
             TARGET,
             "--target-dir",
@@ -140,14 +136,14 @@ def run_desktop(root, dotnet, env, library, sources, run):
             "--offline",
         ]
     )
-    executable = target_directory / TARGET / "debug/examples/test_owned_window_target.exe"
+    executable = target_directory / TARGET / "debug/examples/window-acceptance-target.exe"
     require_x64_desktop_target(executable)
     with load("workspaces").temporary_workspace(
         root / ".native-build", prefix="desktop-consumer-"
     ) as workspace:
         app = workspace / "app"
         shutil.copytree(output, app)
-        bindings.stage_native(library, app / library.name)
+        load("artifacts").stage_native(library, app / library.name)
         shutil.copyfile(executable, app / executable.name)
         run(
             [

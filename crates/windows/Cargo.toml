@@ -6,6 +6,10 @@ license.workspace = true
 publish = false
 rust-version.workspace = true
 
+[[example]]
+name = "window-acceptance-target"
+path = "../../fixtures/acceptance/windows/target-app/main.rs"
+
 [dependencies]
 window-management = { path = "../core" }
 

@@ -8,7 +8,7 @@ from pathlib import Path
 from sdk_tooling.adapters import load
 from sdk_tooling.native_plan import builder
 
-from fixtures.distribution._windows import RID
+from distribution.windows_target import RID
 
 
 def main(argv=None):
@@ -18,7 +18,7 @@ def main(argv=None):
     )
     parser.add_argument("--package-source", action="append", default=[])
     args = parser.parse_args(argv)
-    native = builder(Path(__file__).resolve().parents[2])
+    native = builder(Path(__file__).resolve().parents[1])
     root = native.root
     selected = {"LICENSE": root / "LICENSE", "README.md": root / "README.md"}
     selected.update(
@@ -28,7 +28,7 @@ def main(argv=None):
             if path.name not in (".DS_Store", "registry-notices.json")
         }
     )
-    load("bindings").pack_native(
+    load("nuget").pack_native(
         native,
         project=root
         / "bindings/dotnet/src/NaviApps.WindowManagement/NaviApps.WindowManagement.csproj",

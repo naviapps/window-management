@@ -12,10 +12,10 @@ from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import Mock, call, patch
 
-windows = importlib.import_module("fixtures.distribution._windows")
-build = importlib.import_module("fixtures.distribution.check-windows")
-pack = importlib.import_module("fixtures.distribution.pack-dotnet")
-ci = importlib.import_module("fixtures.distribution.check-ci")
+windows = importlib.import_module("distribution.windows_target")
+build = importlib.import_module("distribution.verify_windows_native")
+pack = importlib.import_module("distribution.pack_nuget")
+ci = importlib.import_module("distribution.verify_windows")
 
 
 class WindowsToolsTests(unittest.TestCase):
@@ -85,8 +85,8 @@ class WindowsToolsTests(unittest.TestCase):
                 seen = []
                 sdk = str(root / "tooling/tasks/sdk")
 
-                checker = "fixtures/distribution/check-windows.py"
-                packer = "fixtures/distribution/pack-dotnet.py"
+                checker = "distribution/verify_windows_native.py"
+                packer = "distribution/pack_nuget.py"
 
                 def run(command, **_options):
                     if command[1] == "run-sdk-fixture":
@@ -210,17 +210,16 @@ class WindowsToolsTests(unittest.TestCase):
             parent = root / ".native-build"
             workspace = parent / "desktop-consumer-test"
             workspace.mkdir(parents=True)
-            project = root / "bindings/dotnet/tests/WindowManagement.NativeTests"
+            project = root / "fixtures/acceptance/windows/host"
             output = project / "bin/Release/net10.0-windows/win-x64"
             output.mkdir(parents=True)
-            (output / "WindowManagement.NativeTests.dll").write_bytes(b"managed fixture")
+            (output / "WindowManagement.WindowsAcceptance.dll").write_bytes(b"managed fixture")
             library = parent / "window_management_ffi.dll"
-            bindings = Mock()
-            workspaces = Mock()
+            artifacts, dotnet, workspaces = Mock(), Mock(), Mock()
             workspaces.temporary_workspace.return_value = nullcontext(workspace)
             run = Mock()
             executable = (
-                root / "target" / windows.TARGET / "debug/examples/test_owned_window_target.exe"
+                root / "target" / windows.TARGET / "debug/examples/window-acceptance-target.exe"
             )
             executable.parent.mkdir(parents=True)
             executable.write_bytes(binary)
@@ -231,7 +230,7 @@ class WindowsToolsTests(unittest.TestCase):
                     "-p",
                     "window-management-windows",
                     "--example",
-                    "test_owned_window_target",
+                    "window-acceptance-target",
                     "--target",
                     windows.TARGET,
                     "--target-dir",
@@ -240,13 +239,13 @@ class WindowsToolsTests(unittest.TestCase):
                     "--offline",
                 ]
             )
-            tooling = {"bindings": bindings, "workspaces": workspaces}
+            tooling = {"artifacts": artifacts, "dotnet": dotnet, "workspaces": workspaces}
             with patch.object(build, "load", side_effect=tooling.get):
                 if not accepted:
                     with self.assertRaisesRegex(ValueError, "x64 PE executable"):
                         build.run_desktop(root, "dotnet", {}, library, (), run)
                     self.assertEqual(run.call_args_list, [build_target])
-                    bindings.stage_native.assert_not_called()
+                    artifacts.stage_native.assert_not_called()
                     workspaces.temporary_workspace.assert_not_called()
                     return
                 build.run_desktop(root, "dotnet", {}, library, (), run)
@@ -254,7 +253,7 @@ class WindowsToolsTests(unittest.TestCase):
                 parent, prefix="desktop-consumer-"
             )
             app = workspace / "app"
-            bindings.stage_native.assert_called_once_with(library, app / library.name)
+            artifacts.stage_native.assert_called_once_with(library, app / library.name)
             self.assertEqual((app / executable.name).read_bytes(), executable.read_bytes())
             self.assertEqual(
                 run.call_args_list,
@@ -263,7 +262,7 @@ class WindowsToolsTests(unittest.TestCase):
                     call(
                         [
                             "dotnet",
-                            app / "WindowManagement.NativeTests.dll",
+                            app / "WindowManagement.WindowsAcceptance.dll",
                             parent / "windows/desktop-acceptance",
                         ]
                     ),

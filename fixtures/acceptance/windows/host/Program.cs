@@ -50,7 +50,7 @@ internal static class Program
         if (args.Length != 1) throw new ArgumentException("Provide an owned output directory.");
         var output = Path.GetFullPath(args[0]); Directory.CreateDirectory(output);
         var readyPath = Path.Combine(output, "ready-" + Guid.NewGuid().ToString("N") + ".json");
-        var executable = Path.Combine(AppContext.BaseDirectory, "test_owned_window_target.exe");
+        var executable = Path.Combine(AppContext.BaseDirectory, "window-acceptance-target.exe");
         var start = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true };
         start.ArgumentList.Add(readyPath);
         using var child = Process.Start(start) ?? throw new InvalidOperationException("Cannot start owned target.");
