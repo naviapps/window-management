@@ -308,9 +308,11 @@ The package fixture in `fixtures/consumers/dotnet/Program.cs` runs after
 receipt and byte checks in an isolated restore. `--package-source <directory>` selects a
 private/local feed; `nuget-consumer --dependency <nupkg>` adds dependencies to its empty
 feed. No feed is published. Cross-OS packing checks provenance, while Mach-O/signature
-inspection must happen on macOS. The shared distribution workflow packs
-`osx-arm64`, `osx-x64` and `win-x64` together and runs independent macOS and
-Windows consumers against the same package bytes.
+inspection must happen on macOS. The shared distribution workflow's macOS job
+packs its regenerated framework and the accepted Windows DLL as
+`osx-arm64`, `osx-x64` and `win-x64` in one NuGet package. Independent macOS
+and Windows consumers run the same package bytes. Select `windows-on-arm` when
+dispatching to test the x64 package on an additional Windows on Arm runner.
 DesktopActions resolves its WindowManagement dependency by its pinned commit.
 Each selected runtime's receipt must verify against this checkout before packing.
 

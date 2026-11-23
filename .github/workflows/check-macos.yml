@@ -13,26 +13,4 @@ concurrency:
 jobs:
   swift:
     name: Swift
-    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@888bf13f109ac7dc806b29478cc9c4acacdf6515
-  contributor:
-    name: Source checks
-    runs-on: xcode-27
-    timeout-minutes: 25
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
-      GIT_TERMINAL_PROMPT: "0"
-      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-    steps:
-      - uses: actions/checkout@v6.1.0
-        with:
-          persist-credentials: false
-      - name: Install contributor tools
-        uses: jdx/mise-action@v5.3.0
-        with:
-          version: "2026.11.12"
-          cache: false
-          add_shims_to_path: false
-      - name: Fetch locked Rust dependencies
-        run: mise exec -- cargo fetch --locked
-      - name: Check source and bindings
-        run: mise exec -- make check-source
+    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@51fde4fe947c1032b35b7e6bac47d5199c396891
