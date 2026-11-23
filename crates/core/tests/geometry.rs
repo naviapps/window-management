@@ -361,14 +361,19 @@ fn display_order_and_targets_are_explicit() {
         is_main: 0,
         ..a
     };
-    let displays = [a, b];
-    assert_eq!(ordered_indices(&displays), [1, 0]);
+    let c = Display {
+        frame: rect(-100.0, 20.0, 100.0, 100.0),
+        identifier: 1,
+        ..b
+    };
+    let displays = [a, c, b];
+    assert_eq!(ordered_indices(&displays), [2, 1, 0]);
     for query in [
         DisplayQuery::Main,
         DisplayQuery::ContainingWindow(rect(10.0, 10.0, 20.0, 20.0)),
         DisplayQuery::Point(0.0, 10.0),
         DisplayQuery::Identifier(0),
-        DisplayQuery::OrderedIndex(1),
+        DisplayQuery::OrderedIndex(2),
     ] {
         assert_eq!(
             select_display(&displays, query, false),
@@ -463,6 +468,13 @@ fn display_order_treats_signed_zeros_as_equal_coordinates() {
     );
     assert_eq!(index_containing_point(&displays, 150.0, 10.0), Some(4));
     assert_eq!(ordered_indices(&[duplicate_identifier, primary]), [0, 1]);
+
+    let taller = Display {
+        frame: rect(0.0, 0.0, 100.0, 200.0),
+        identifier: 0,
+        ..primary
+    };
+    assert_eq!(ordered_indices(&[larger, taller, primary]), [2, 1, 0]);
 }
 
 #[test]

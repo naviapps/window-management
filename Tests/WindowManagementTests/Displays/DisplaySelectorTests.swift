@@ -3,23 +3,6 @@ import WindowManagement
 import XCTest
 
 final class DisplaySelectorTests: XCTestCase {
-  func testOrderedDisplaysSortsByMinXThenMinY() {
-    let displays = [
-      makeDisplay(CGRect(x: 100, y: 10, width: 100, height: 100)),
-      makeDisplay(CGRect(x: 0, y: 20, width: 100, height: 100)),
-      makeDisplay(CGRect(x: 0, y: 0, width: 100, height: 100)),
-    ]
-
-    XCTAssertEqual(
-      DisplaySelector.orderedDisplays(from: displays).map(\.frame.origin),
-      [
-        CGPoint(x: 0, y: 0),
-        CGPoint(x: 0, y: 20),
-        CGPoint(x: 100, y: 10),
-      ]
-    )
-  }
-
   func testDisplayResolvesTargets() {
     let primary = makeDisplay(
       CGRect(x: 0, y: 0, width: 200, height: 200),
@@ -83,19 +66,6 @@ final class DisplaySelectorTests: XCTestCase {
 
     XCTAssertEqual(DisplaySelector.index(containing: CGPoint(x: 350, y: 10), in: displays), 1)
     XCTAssertNil(DisplaySelector.index(containing: CGPoint(x: 500, y: 10), in: displays))
-  }
-
-  func testOrderedDisplaysUsesFrameSizeAndDisplayIdentifierAsTieBreakers() {
-    let displays = [
-      makeDisplay(CGRect(x: 0, y: 0, width: 200, height: 100), displayIdentifier: 3),
-      makeDisplay(CGRect(x: 0, y: 0, width: 100, height: 200), displayIdentifier: 2),
-      makeDisplay(CGRect(x: 0, y: 0, width: 100, height: 100), displayIdentifier: 1),
-    ]
-
-    XCTAssertEqual(
-      DisplaySelector.orderedDisplays(from: displays).compactMap(\.displayIdentifier),
-      [1, 2, 3]
-    )
   }
 
   func testDisplayOrderReturnsOriginalValuesWithTiedAndMissingIdentifiers() {
