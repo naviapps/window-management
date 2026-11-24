@@ -64,7 +64,8 @@ class WindowsToolsTests(unittest.TestCase):
                 self.assertEqual(call_.kwargs["runtimes"], list(runtimes))
                 self.assertEqual(
                     call_.kwargs["package_files"],
-                    {"LICENSE": root / "LICENSE", "README.md": root / "README.md"} | retained,
+                    {"LICENSE": root / "LICENSE", "README.md": root / "bindings/dotnet/README.md"}
+                    | retained,
                 )
 
     def test_windows_build_selects_native_tools_for_the_x64_target(self):

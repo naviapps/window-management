@@ -6,9 +6,9 @@ onboarding, product policy, persistence and UI.
 
 ## Documentation
 
-- [Platform contracts](#platform-contracts): shared boundaries and Windows behavior.
-- [Swift window values, geometry and requests](https://github.com/naviapps/window-management/blob/main/docs/swift.md)
-- [Native macOS queries, hit testing, placement and Accessibility](https://github.com/naviapps/window-management/blob/main/docs/swift-macos.md)
+- [Geometry, filters and requests](docs/swift.md) for Swift and .NET.
+- [Native macOS queries, hit testing, placement and Accessibility](docs/swift-macos.md).
+- [Windows behavior](#windows-behavior).
 - [Development](#development): setup, checks, native artifacts, packages and owned fixtures.
 
 ## Installation
@@ -88,28 +88,8 @@ checks cannot establish arbitrary pointer validity.
 
 ### .NET
 
-.NET 10 consumers can download the combined `NaviApps.WindowManagement` NuGet
-package from a successful [distribution run](https://github.com/naviapps/sdk-tooling/actions/workflows/check-sdk-distribution.yml)
-for the selected revision. Verify its SHA-256 against the accompanying receipt.
-In a new directory, replace the feed path below with the absolute path to the
-downloaded package directory and use the version of the package you received.
-
-```sh
-dotnet new console --framework net10.0 --no-restore
-dotnet package add NaviApps.WindowManagement --version "[0.1.0]" --no-restore
-dotnet restore --source "/absolute/path/to/sdk-packages" --packages ./.nuget-packages
-```
-
-Use a fresh cache directory for each candidate with the same version and run
-with `dotnet run --no-restore` after restoring. The combined package includes
-`osx-arm64`, `osx-x64` and `win-x64`; consumers need no Rust or MSVC toolchain.
-On Windows 11 ARM64, run the installed package in an x64 .NET process under
-emulation.
-
-Keep the managed package and native runtime assets from the same SDK build. Private
-feed publication is separate from CI or local package generation. See the
-[package workflow](#consumers-artifacts-and-packages)
-when building a local feed.
+The [.NET guide](bindings/dotnet/README.md) shows how to restore the combined
+`NaviApps.WindowManagement` package and run its geometry API on .NET 10.
 
 ## Usage
 
@@ -142,35 +122,12 @@ func placeFocusedWindow() throws {
 }
 ```
 
-The .NET geometry API uses the same Rust engine and can run with a matching native
-runtime on macOS or Windows:
-
-```csharp
-using NaviApps.WindowManagement;
-
-Rect leftHalf = Geometry.Grid(new Rect(0, 0, 1440, 900), 2, 1, 0, 0);
-```
-
-Use `WindowsDesktop` for live Windows queries and control. Capture a `WindowIdentity`
-before issuing a command. Discovery does not activate windows. State commands retain
-native activation behavior.
-
 ## Platform contracts
 
-Geometry uses one caller-selected coordinate space. Default macOS placement uses
-Accessibility coordinates (primary-display top-left origin, y increasing downward).
-Windows uses physical virtual-desktop pixels. Injected providers must agree on
-coordinates. Swift `DisplaySelector` and .NET `Geometry.SelectDisplay` default to
-first-display fallback. Swift `WindowRequestResolver` and the .NET request resolvers
-default to no fallback. Swift `WindowPlacer` defaults to first-display fallback.
-Empty display lists never resolve.
-
-Native requests can fail or be constrained by the target application. Close/state
-acceptance proves neither completion nor saved data. Shared geometry, snapshot filtering
-and strict JSON contracts are documented in the
-[core guide](https://github.com/naviapps/window-management/blob/main/docs/swift.md).
-Compilation does not establish native runtime coverage; acceptance belongs to its source
-and environment.
+See the [shared geometry, snapshot filters and JSON contracts](docs/swift.md)
+and the [native macOS guide](docs/swift-macos.md). Native operations can be
+constrained by the target application. Close and state requests can finish
+later, and the target application controls saving data.
 
 ### Windows behavior
 
@@ -200,8 +157,8 @@ The resolver receives candidates that pass numeric conditions when the filter co
 an application include or exclusion. An unresolved owner cannot satisfy an application
 include set. Both query forms retain native z order.
 
-Windows point queries use physical coordinates and sample the pixel at each coordinate's
-floor. This follows the [native rectangle convention](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getwindowrect)
+Windows uses physical virtual-desktop pixels. Point queries sample the pixel at
+each coordinate's floor. This follows the [native rectangle convention](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getwindowrect)
 of including the top and left edges and excluding the bottom and right edges. Frame
 commands round coordinates to the nearest pixel.
 
@@ -232,9 +189,9 @@ Upstream notices are retained in `ThirdParty/`. Package and Windows acceptance d
 
 ### Setup and checks
 
-Run commands from the SDK root. Swift development requires Swift 6.3 or later
-on macOS 26 or later. Review `mise.toml` and `rust-toolchain.toml` before installing
-their pinned Python 3.15.1, Rust 1.99.1, .NET 10 and static tools:
+From the SDK root, use Swift 6.3 or later on macOS 26 or later. Review
+[`mise.toml`](mise.toml) and [`rust-toolchain.toml`](rust-toolchain.toml)
+for the pinned tools:
 
 ```sh
 mise trust mise.toml
@@ -243,12 +200,8 @@ mise exec -- cargo fetch --locked
 mise exec -- make check
 ```
 
-The fetch prepares the Cargo cache for locked offline Rust checks. Formatting,
-Rust and Swift tests run from this checkout. Formatting and the standalone Swift
-consumer use the public SDK Tooling CLI pinned in [mise.toml](mise.toml). Ordinary
-SwiftPM, C and NuGet consumers do not need developer tools.
-
-Use `mise exec -- make <target>` so pinned tools remain available in temporary clients.
+Fetching prepares the Cargo cache for locked offline checks. Use
+`mise exec -- make <target>` so pinned tools remain available in temporary clients.
 
 | Target                     | SDK coverage                                                                            |
 | -------------------------- | --------------------------------------------------------------------------------------- |
@@ -330,6 +283,8 @@ and Windows consumers run the same package bytes. Select `windows-on-arm` when
 dispatching to test the x64 package on an additional Windows on Arm runner.
 DesktopActions resolves its WindowManagement dependency by its pinned commit.
 Each selected runtime's receipt must verify against this checkout before packing.
+The generated package and its receipt are local or CI artifacts. Publishing to
+a private feed is a separate step.
 
 ### Owned platform acceptance
 

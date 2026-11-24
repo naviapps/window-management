@@ -1,26 +1,23 @@
-# Swift window values, geometry and requests
+<a name="swift-window-values-geometry-and-requests"></a>
 
-Swift window values and provider contracts, backed by the Rust geometry and request engine
-shared with the Windows adapter.
+# Window geometry, filters and requests
+
+Swift and .NET project the same Rust geometry, snapshot filtering and request
+contracts. For platform control, see the [native macOS guide](swift-macos.md)
+and [Windows behavior](../README.md#windows-behavior).
 
 ## Overview
 
-Use WindowManagement when you want reusable window value and geometry primitives:
+Use `WindowSnapshot` and `WindowSnapshotFilter` for window metadata and filtering.
+In Swift, `WindowSnapshotProviding`, `WindowSnapshotResolving`, and
+`WindowHitTesting` define the provider boundaries. `WindowTarget` identifies
+a window for a control provider.
 
-- `WindowSnapshot` and `WindowSnapshotFilter` for window metadata and filtering contracts.
-- `WindowHitTesting` and its result models for provider-backed point selection.
-- `WindowPlacement` and `WindowPlacementCalculator` for deterministic geometry.
-- `DisplaySelector` for deterministic display ordering and target resolution.
-- `DisplayMovement` for deterministic display-to-display movement geometry.
-- `WindowPlacementRequest`, `WindowMoveRequest`, and `WindowRequestResolver` for complete
-  requests, display resolution and frame planning owned by Rust.
-- `WindowRequestCodec` for strict request JSON before language decoding.
-- `WindowTarget` and control/provider protocols for host-app or platform-specific implementations.
-- `WindowSnapshotProviding`, `WindowSnapshotResolving`, and `WindowHitTesting` for host-app
-  window services.
+Swift exposes placement through `WindowPlacementCalculator`, with
+`DisplaySelector` and `DisplayMovement` for display targeting and moves.
+.NET exposes these calculations through `Geometry`. Complete operations use
+`WindowPlacementRequest` and `WindowMoveRequest`.
 
-Live macOS query implementations live in `WindowManagementMacOS`. The Swift facade projects
-the shared Rust core into Core Graphics values; Windows uses the same core through Rust/C/.NET.
 Snapshot filters compile their immutable include/exclude sets in Rust. A value copy
 retains the native selector, and concurrent queries never mutate it. Numeric conditions
 reject windows before an adapter requests application metadata. Point containment
@@ -40,6 +37,9 @@ Hosts must rename saved `includedOwnerBundleIdentifiers` / `excludedOwnerBundleI
 keys before decoding, preserving their opaque identifier arrays and any unresolved input.
 Legacy keys are rejected without aliases; native identifiers belong to their OS.
 
+## Geometry and display selection
+
+Use one coordinate space for all bounds, frames and points in a calculation.
 `DisplayTarget.containingWindow` selects the display with the greatest positive
 intersection with the normalized window frame. Equal areas prefer center containment,
 then stable display order; zero-width or zero-height windows use center containment.
@@ -49,10 +49,11 @@ bounds, while placement and movement can use visible bounds for the resulting fr
 Adjacent-display movement keeps the normalized frame when the window is already on
 the only display. A removed display identifier or a window outside all displays follows the
 selected fallback. Swift `DisplaySelector` / .NET `Geometry.SelectDisplay` default to
-first-display fallback. Both request resolvers default to no fallback. Both selectors
-use the raw point and ordered index for direct selection. Request construction normalizes
-nonfinite point coordinates and negative ordered indexes to zero. Empty display lists
-never resolve. Geometry resolution does not query, select or restore a native window.
+first-display fallback, as does the native macOS `WindowPlacer`. Both request
+resolvers default to no fallback. Both selectors use the raw point and ordered
+index for direct selection. Request construction normalizes nonfinite point
+coordinates and negative ordered indexes to zero. Empty display lists never
+resolve. Geometry resolution does not query, select or restore a native window.
 Swift `DisplaySelector.index(containing:in:)` and .NET `Geometry.IndexContainingPoint`
 return the position in deterministic display order, including when input arrives unsorted.
 Display order compares normalized x, y, width, and height, treating signed zeros as the

@@ -24,7 +24,7 @@ def main(argv=None):
     root = Path(__file__).resolve().parents[1]
     native = ffi_product(root) if set(args.runtime) == {RID} else xcframework(root)
     nuget = load("nuget")
-    selected = {"LICENSE": root / "LICENSE", "README.md": root / "README.md"}
+    selected = {"LICENSE": root / "LICENSE", "README.md": root / "bindings/dotnet/README.md"}
     selected.update(nuget.retained_notice_files(root / "ThirdParty", "ThirdParty"))
     package = nuget.pack_native(
         native,
