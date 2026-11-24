@@ -8,7 +8,6 @@ python = "3.15.1"
 ruff = "0.17.3"
 dprint = "0.64.3"
 jactionlint = "2.6.0"
-shellcheck = { version = "0.11.0", os = ["macos", "linux"] }
 swiftlint = { version = "0.65.1", os = ["macos"] }
 uv = { version = "0.13.6", os = ["macos", "linux"] }
 "cargo:cbindgen" = "0.29.4"
@@ -24,4 +23,4 @@ run = "mise run sdk-tooling -- quality format --dotnet"
 
 [tasks.sdk-tooling]
 description = "Run the pinned shared SDK checks"
-run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@4c7410971d45a08d58f896583fab3a36a61acbd9 sdk-tooling"
+run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@c80aebadffbab8d09a14456e987db5ad273f6879 sdk-tooling"

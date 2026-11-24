@@ -6,6 +6,3 @@ line-length = 100
 select = ["E4", "E7", "E9", "F", "I", "RUF100", "B006"]
 # Local callable binding is a style choice, not a correctness failure.
 ignore = ["E731"]
-
-[format]
-quote-style = "double"

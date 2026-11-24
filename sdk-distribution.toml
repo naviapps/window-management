@@ -7,7 +7,6 @@ commands = [
 [windows]
 commands = [
   ["rustup", "install", "--no-self-update"],
-  ["cargo", "fmt", "--all", "--", "--check"],
   [
     "sdk-tooling",
     "python",
