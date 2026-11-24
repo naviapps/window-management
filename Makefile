@@ -3,11 +3,11 @@ SWIFT_STRICT_FLAGS := -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-a
 
 .DEFAULT_GOAL := check
 
-.PHONY: check check-source test-managed check-distribution build build-release clean format lint test test-consumer test-installed-consumers native native-verify test-rust test-dotnet test-c test-distribution-tools
+.PHONY: check check-source test-managed check-distribution build build-release clean format lint test test-consumer test-installed-consumers native native-verify check-header generate-header test-rust test-dotnet test-c test-distribution-tools
 
 check: check-source test test-consumer
 
-check-source: lint test-rust test-managed
+check-source: lint check-header test-rust test-managed
 
 check-distribution: native-verify build-release test-distribution-tools test-installed-consumers test-c test-dotnet
 
@@ -38,11 +38,17 @@ test-consumer:
 test-installed-consumers:
 	$(SDK_TOOLING) rust-c-consumers
 
-native:
+native: generate-header
 	$(SDK_TOOLING) xcframework
 
-native-verify:
+native-verify: check-header
 	$(SDK_TOOLING) xcframework --verify
+
+check-header:
+	$(SDK_TOOLING) c-headers check
+
+generate-header:
+	$(SDK_TOOLING) c-headers generate
 
 test-rust:
 	cargo clippy --workspace --all-targets --locked --offline -- -D warnings

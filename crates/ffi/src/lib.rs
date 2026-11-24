@@ -1,5 +1,8 @@
 //! C ABI; input slices borrow caller storage only for the duration of a call.
 use window_management::{Display, DisplayQuery, Rect};
+
+pub const WINDOW_MANAGEMENT_ABI_VERSION: u32 = 6u32;
+
 fn sized_buffer<T>(pointer: *const T, count: usize) -> bool {
     !pointer.is_null()
         && pointer.is_aligned()
@@ -25,25 +28,27 @@ pub struct RectResult {
 }
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_abi_version() -> u32 {
-    6
+    WINDOW_MANAGEMENT_ABI_VERSION
 }
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_rect_normalize(rect: Rect) -> Rect {
     rect.normalized()
 }
-/// Finite point containment; include minimum edges and exclude maximum edges.
+/// Normalize bounds and reject non-finite points. Minimum edges are included,
+/// and maximum edges are excluded.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_rect_contains(rect: Rect, x: f64, y: f64) -> u32 {
     u32::from(rect.contains(x, y))
 }
-/// Resolve a typed placement without borrowing foreign grid storage.
+/// Placement kinds: 0 fill, 1 grid, 2 centered. Result codes: 0 success, 1 invalid kind.
+/// Grid counts, indices, spans and ratios are clamped. Row zero starts at minimum y.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_placement(
-    value: values::PlacementValue,
+    placement: values::PlacementValue,
     area: Rect,
     inset: f64,
 ) -> RectResult {
-    match value.read() {
+    match placement.read() {
         Some(value) => RectResult {
             code: 0,
             frame: value.frame(area, inset),
@@ -67,8 +72,12 @@ pub extern "C" fn window_management_move(
         window_management::preserving_relative_position(window, source, target)
     }
 }
+/// Return the number of indices written, or zero for empty input or invalid buffers/capacity.
+/// Output capacity must cover count.
+///
 /// # Safety
-/// Nonnull buffers must be aligned and readable/writable for their declared counts; buffers must not overlap.
+/// Nonnull buffers must be aligned and readable/writable for their declared counts.
+/// Buffers must not overlap.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_display_order(
     displays: *const Display,
@@ -87,8 +96,15 @@ pub unsafe extern "C" fn window_management_display_order(
     unsafe { std::ptr::copy_nonoverlapping(indices.as_ptr(), output, count) };
     count
 }
+/// Return the original-array index or -1 for no match or invalid input.
+/// Kinds: 0 main, 1 greatest positive window overlap, 2 point in the display coordinate
+/// space, 3 identifier, 4 ordered index. Kind 1 uses normalized full frames. Equal areas
+/// prefer center containment, then stable order. Zero-width or zero-height windows use
+/// center containment alone. Nonzero fallback allows the first ordered display when a valid
+/// kind has no match.
+///
 /// # Safety
-/// Displays is null for zero count, otherwise readable/aligned for count values.
+/// Displays must be aligned and readable for count values. Null is allowed for zero count.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_display_select(
     displays: *const Display,
@@ -114,8 +130,11 @@ pub unsafe extern "C" fn window_management_display_select(
     };
     window_management::select_display(displays, target, fallback != 0).map_or(-1, |i| i as i64)
 }
+/// Return the position in stable display order or -1 for no match or invalid input.
+/// Use the same borrowed buffer and half-open point rules as display selection.
+///
 /// # Safety
-/// Displays is null for zero count, otherwise readable/aligned for count values.
+/// Displays must be aligned and readable for count values. Null is allowed for zero count.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_display_index_containing_point(
     displays: *const Display,

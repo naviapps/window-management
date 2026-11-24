@@ -211,6 +211,7 @@ Fetching prepares the Cargo cache for locked offline checks. Use
 | `test-consumer`            | Both Swift products installed with synthetic providers                                  |
 | `test-installed-consumers` | Independent Rust Git client and installed-framework C client                            |
 | `test-c` / `test-dotnet`   | Native C / managed boundary fixtures against the framework                              |
+| `check-header`             | Verify that the checked-in C header matches the Rust FFI                                |
 | `native` / `native-verify` | Rebuild / verify the universal macOS framework and receipt                              |
 
 `mise run lint` checks owned source; `mise run format` formats it. `DOTNET_BIN` selects
@@ -255,8 +256,10 @@ with an unused `--evidence` path outside the checkout. This does not test remote
 credentials, Windows DLLs or a framework rebuild.
 
 `Artifacts/CWindowManagement.xcframework` and `Artifacts/native-build.json` are retained
-consumer inputs. Run `mise exec -- make native` after captured production inputs change,
-then `mise exec -- make native-verify`. Test-only Rust edits do not invalidate them.
+consumer inputs. Run `mise exec -- make native` after captured production inputs
+change. It regenerates the C header and module map before rebuilding. Use
+`mise exec -- make native-verify` to verify the generated files and framework.
+Test-only Rust edits do not invalidate them.
 The [native build policy](native.toml) and its inputs are recorded in the receipt.
 The framework combines original notices in `Resources/ThirdPartyNotices.txt`; originals
 and Rust provenance remain in `ThirdParty/` and accompany selected NuGet runtimes.

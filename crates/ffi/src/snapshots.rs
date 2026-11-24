@@ -4,10 +4,14 @@ use window_management::{SnapshotFilter, SnapshotIdentityMatch};
 /// Immutable selection, safe to query concurrently while its owner remains live.
 pub struct WindowFilter(SnapshotFilter);
 
+/// Compile original JSON in one pass. The JSON slot receives a separately owned
+/// canonical result (code 0) or diagnostic (code 1). The compiled filter is null
+/// on rejection. Destroy each owner independently using its own function.
+/// Concurrent filter queries are allowed; destruction needs exclusive ownership.
+///
 /// # Safety
-/// Bytes must be readable for length. JSON output must be writable and must
-/// not overlap input. It receives a separately owned canonical JSON result or
-/// diagnostic; the compiled selection is null on rejection.
+/// Bytes must be readable for length. The nonnull JSON output slot must be writable
+/// and must not overlap the input.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_window_filter_compile(
     data: *const u8,

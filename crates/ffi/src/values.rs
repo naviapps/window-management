@@ -73,6 +73,8 @@ pub struct PlacementResult {
     pub code: u32,
     pub value: PlacementValue,
 }
+/// Normalize a typed placement using the same kind codes as geometry.
+/// Result codes: 0 success, 1 invalid kind.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_placement_normalize(value: PlacementValue) -> PlacementResult {
     match value.read() {
@@ -144,6 +146,8 @@ pub struct SelectionResult {
     pub code: u32,
     pub value: SelectionValue,
 }
+/// Normalize a typed display target using the same kind codes as display selection.
+/// Result codes: 0 success, 1 invalid kind.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_display_target_normalize(
     value: SelectionValue,
@@ -168,6 +172,7 @@ pub extern "C" fn window_management_inset_normalize(value: f64) -> f64 {
 pub struct PlacementRequestValue {
     pub placement: PlacementValue,
     pub display: SelectionValue,
+    /// Display area: 0 visible, 1 full.
     pub area: u32,
     pub inset: f64,
 }
@@ -187,6 +192,7 @@ impl PlacementRequestValue {
 }
 #[repr(C)]
 pub struct MoveRequestValue {
+    /// Display direction: 0 next, 1 previous.
     pub direction: u32,
     pub preserves_relative_position: u32,
 }
@@ -202,19 +208,23 @@ impl MoveRequestValue {
         })
     }
 }
+/// Resolve placement. Result codes: 0 resolved, 1 invalid request or buffer,
+/// 2 display not found.
+///
 /// # Safety
-/// Nonempty displays must be readable/aligned for count values. No storage is retained.
+/// Nonempty displays must be readable and aligned for count values. Displays are
+/// borrowed during the call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_placement_resolve(
     request: PlacementRequestValue,
     window: Rect,
-    display_data: *const Display,
+    displays: *const Display,
     count: usize,
     fallback: u32,
 ) -> super::RectResult {
     let Some((r, s)) = request
         .read()
-        .zip(unsafe { super::display_slice(display_data, count) })
+        .zip(unsafe { super::display_slice(displays, count) })
     else {
         return super::RectResult {
             code: 1,
@@ -229,18 +239,22 @@ pub unsafe extern "C" fn window_management_placement_resolve(
         |frame| super::RectResult { code: 0, frame },
     )
 }
+/// Resolve movement. Result codes: 0 resolved, 1 invalid request or buffer,
+/// 2 display not found.
+///
 /// # Safety
-/// Nonempty displays must be readable/aligned for count values. No storage is retained.
+/// Nonempty displays must be readable and aligned for count values. Displays are
+/// borrowed during the call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_movement_resolve(
     request: MoveRequestValue,
     window: Rect,
-    display_data: *const Display,
+    displays: *const Display,
     count: usize,
     fallback: u32,
 ) -> super::RectResult {
     let plan =
-        unsafe { window_management_movement_plan(request, window, display_data, count, fallback) };
+        unsafe { window_management_movement_plan(request, window, displays, count, fallback) };
     super::RectResult {
         code: plan.code,
         frame: plan.frame,
@@ -254,20 +268,23 @@ pub struct MovementPlanResult {
     pub frame: Rect,
 }
 
-/// Resolve a movement and decide whether to write against normalized window coordinates.
+/// Resolve movement with the same result codes as window_management_movement_resolve.
+/// On success, requires_frame_write compares against the normalized input window.
+///
 /// # Safety
-/// Nonempty displays must be readable/aligned for count values. No storage is retained.
+/// Nonempty displays must be readable and aligned for count values. Displays are
+/// borrowed during the call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_movement_plan(
     request: MoveRequestValue,
     window: Rect,
-    display_data: *const Display,
+    displays: *const Display,
     count: usize,
     fallback: u32,
 ) -> MovementPlanResult {
     let Some((r, s)) = request
         .read()
-        .zip(unsafe { super::display_slice(display_data, count) })
+        .zip(unsafe { super::display_slice(displays, count) })
     else {
         return MovementPlanResult {
             code: 1,
@@ -296,6 +313,7 @@ pub struct Json {
 }
 #[repr(C)]
 pub struct JsonView {
+    /// Result codes: 0 canonical JSON, 1 UTF-8 diagnostic text.
     pub code: u32,
     pub data: *const u8,
     pub length: usize,
@@ -322,27 +340,34 @@ impl Json {
     }
 }
 
+/// Serialize a native placement using the same normalized schema and owned result
+/// contract as window_management_value_json.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_placement_json(value: PlacementValue) -> *mut Json {
     Json::owned(value.read().map(|v| serde_json::to_vec(&v.normalized())))
 }
+/// Serialize a native display target using the same owned result contract.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_display_target_json(value: SelectionValue) -> *mut Json {
     Json::owned(value.read().map(|v| serde_json::to_vec(&v.normalized())))
 }
+/// Serialize a native placement request using the same owned result contract.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_placement_request_json(
     value: PlacementRequestValue,
 ) -> *mut Json {
     Json::owned(value.read().map(|v| serde_json::to_vec(&v.normalized())))
 }
+/// Serialize a native movement request using the same owned result contract.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_move_request_json(value: MoveRequestValue) -> *mut Json {
     Json::owned(value.read().map(|v| serde_json::to_vec(&v)))
 }
+/// Canonicalize JSON and return an owned result. Kinds: 0 placement, 1 display target,
+/// 2 placement request, 3 move request. Result views borrow their owner until destruction.
+///
 /// # Safety
-/// Input must be readable for length bytes. kind:0 placement,1 selection,2 placement request,
-/// 3 move request.
+/// Input must be readable for length bytes and is borrowed during the call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_value_json(
     kind: u32,

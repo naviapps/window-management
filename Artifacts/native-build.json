@@ -1512,7 +1512,7 @@
         },
         "inputs": {
           "Cargo.toml": "1b11344fede92cd34275f7492f13ca3abfcc4ca2bc461cae3a14b4d4e6aa8045",
-          "crates/ffi/Cargo.toml": "834e02ae133f096ea0ed6a615a48da3ce453e7e4d4a0a2dc04e444bf8447f181"
+          "crates/ffi/Cargo.toml": "84ae36a750a7313fa884198be4e7ff95d2b6999bc19e2b46baddd6d7a653cba1"
         },
         "name": "window-management-ffi",
         "source": "workspace",
@@ -1559,7 +1559,7 @@
       "Cargo.lock": "03684971ce6759716893ab23d2ff75ec1e201bd6acefde07d7c13fd4313a5a9a",
       "Cargo.toml": "1b11344fede92cd34275f7492f13ca3abfcc4ca2bc461cae3a14b4d4e6aa8045",
       "crates/core/Cargo.toml": "236a0e45fdbbe9287bafbe49c3009ccaf93055db7fb7a98ccfd68cc896e83927",
-      "crates/ffi/Cargo.toml": "834e02ae133f096ea0ed6a615a48da3ce453e7e4d4a0a2dc04e444bf8447f181",
+      "crates/ffi/Cargo.toml": "84ae36a750a7313fa884198be4e7ff95d2b6999bc19e2b46baddd6d7a653cba1",
       "rust-toolchain.toml": "d13306be0ecda81ce779baa290ffb417380d525928477f16200884b5169cca33"
     }
   },
@@ -1651,13 +1651,13 @@
     "crates/core/src/lib.rs": "8f7fa622e0762f7bd252a817e5a5b8162559f8f76a8e59e406eebc3254c3259f",
     "crates/core/src/requests.rs": "76d3ed79ed92e34e0d13654653867bf6a8b728fcb23a3d779e9069935c485314",
     "crates/core/src/snapshots.rs": "1d464d2cf262af01b92e0cf25da9af106c01171a83c6545c0a52147cee03f7af",
-    "crates/ffi/Cargo.toml": "834e02ae133f096ea0ed6a615a48da3ce453e7e4d4a0a2dc04e444bf8447f181",
-    "crates/ffi/include/window_management.h": "6c37892c0660b51cf38bd0732afaf0adde9bdeb0b37cb3df2a42f4b2cc3149e1",
-    "crates/ffi/module.modulemap": "9a90fee9233f0ba1a600f5d3b6350d31d21aa7e14fd70a1bf07b1e9add05b618",
-    "crates/ffi/src/lib.rs": "75c1e383c3d37239932ec3f58f43be712986eb610acc1eab00a9118f0fc50c56",
-    "crates/ffi/src/snapshots.rs": "6f390c3572afece496a8d1cf546b39808b2beadced2213a7a8765cf6593cd337",
-    "crates/ffi/src/values.rs": "ff37ccb8829433a2035177670da6985f1c27e31372ff2ff15cddd88effce0472",
-    "crates/ffi/src/windows.rs": "5d7d83ec8bd58cc6a6e292c1495e3397efce2d2f2301eb9dacc71db7e122f4b3",
+    "crates/ffi/Cargo.toml": "84ae36a750a7313fa884198be4e7ff95d2b6999bc19e2b46baddd6d7a653cba1",
+    "crates/ffi/include/window_management.h": "d772320a180f148cacf51f9406ccddffd495eb03e55014b69bc1c63ef3343894",
+    "crates/ffi/module.modulemap": "e9e64da17b6b1f007923b57fbcb89b87be4b9bbdc94aa98e25065914c3effe8f",
+    "crates/ffi/src/lib.rs": "e9a872e9eee9d3a01dc671eec11b92f15a6ebe07faba966fa7c1a0c90b387b33",
+    "crates/ffi/src/snapshots.rs": "489a040c8c620a721e06628d0afe992fb2cddfda0441705b7f27663fd9c21eb9",
+    "crates/ffi/src/values.rs": "52d115c06de0f4f845facd4f499970822a02f2a77cac46eb8c8578b23357a72f",
+    "crates/ffi/src/windows.rs": "22224e2032ed9e25719292334fa351217f3b7e1c994bf4006c8647adbf52a824",
     "crates/windows/Cargo.toml": "2e862e3106e8774b25748ae2553f288db6e0a7b35fbcac29de0844979d2f1843",
     "native.toml": "642f918c378bbb3d389e4a2d6c44a2e37dd247ce58badead904930347ee31566",
     "rust-toolchain.toml": "d13306be0ecda81ce779baa290ffb417380d525928477f16200884b5169cca33"
@@ -1669,12 +1669,12 @@
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Headers": "036ae9446c4f0c59046671d1d96e2de4f606b340d8a5c1927b2d51bc293e0365",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Modules": "278b6b2d8f8418e2e4877a67a109b6e3865174e4fa7405870a643e95cbc2f783",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Resources": "c213ee8e9c523538d862da3e5716b64bf090f6a1be08914954ae33cfbda7dbb2",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/CWindowManagement": "4c21748dff14c4b0e248debdf0d7bf7605192b5d2dfc07c2a1a1e67065011646",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Headers/window_management.h": "6c37892c0660b51cf38bd0732afaf0adde9bdeb0b37cb3df2a42f4b2cc3149e1",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Modules/module.modulemap": "9a90fee9233f0ba1a600f5d3b6350d31d21aa7e14fd70a1bf07b1e9add05b618",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/CWindowManagement": "ce2971645c5f69a3caf8f33ce029e10f61e445062bc2df9a0ba60f26ccc18e84",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Headers/window_management.h": "d772320a180f148cacf51f9406ccddffd495eb03e55014b69bc1c63ef3343894",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Modules/module.modulemap": "e9e64da17b6b1f007923b57fbcb89b87be4b9bbdc94aa98e25065914c3effe8f",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/Info.plist": "135546d1e47c03050007a8692507e8d2a0273fa0cdcfb4745f8f4c0e58b65dd0",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/ThirdPartyNotices.txt": "98fd0542cf941aa32f86dc85151efa203a082ec5c2b2e451f6697cef1a2f790f",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/_CodeSignature/CodeResources": "d52b86f7de538993ea323d42da0b028e03a36f60c03905355a475612cb061338",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/_CodeSignature/CodeResources": "878f1ad760a0be0d9f16b24765c9665619714d2ae08cc1bbfb2af92ee265641b",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/Current": "ee26006c07174064a7bed9b283a8b016d74a295e05c4e23a1846538d69b23c5f"
   },
   "productionSources": [

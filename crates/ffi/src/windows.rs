@@ -40,7 +40,7 @@ struct Window {
     minimized: bool,
     maximized: bool,
 }
-/// Code:0success,1unsupported,2invalid input,3unavailable,4target changed,5native failure.
+/// Owned query result. Destroy it exactly once; copy borrowed views before destruction.
 pub struct Query {
     code: u32,
     native_error: u32,
@@ -49,7 +49,10 @@ pub struct Query {
 }
 #[repr(C)]
 pub struct QueryView {
+    /// Status: 0 success, 1 unsupported OS, 2 invalid input, 3 unavailable,
+    /// 4 target identity changed, 5 native failure.
     pub code: u32,
+    /// GetLastError value for native failures.
     pub native_error: u32,
     pub count: usize,
     pub displays: *const Display,
@@ -106,6 +109,9 @@ fn error_status(error: window_management_windows::Error) -> (u32, u32) {
         Error::Native(code) => (5, code),
     }
 }
+/// Capture the foreground HWND, process and thread without reading window metadata.
+/// Status: 0 success, 1 unsupported OS, 3 unavailable owner, 4 foreground changed.
+/// Identity is zeroed on failure. The returned value needs no destruction.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_windows_foreground_identity() -> IdentityResult {
     #[cfg(windows)]
@@ -132,12 +138,14 @@ pub extern "C" fn window_management_windows_foreground_identity() -> IdentityRes
     };
     result
 }
-/// # Safety
-/// No borrowed memory is retained. The returned query must be destroyed exactly once.
+/// Return an owned query. Kinds: 0 visible windows, 1 foreground, 2 known identity,
+/// 3 root window at a physical point, 4 visible non-minimized bounds containing a
+/// physical point in native z order. Physical-point queries sample the pixel containing
+/// the fractional coordinates. For kind 4, an invalid point yields zero results.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_windows_query(
     kind: u32,
-    value: Identity,
+    identity: Identity,
     x: f64,
     y: f64,
 ) -> *mut Query {
@@ -145,9 +153,9 @@ pub extern "C" fn window_management_windows_query(
     let result = {
         use window_management_windows as win;
         let value = win::WindowIdentity {
-            handle: value.handle,
-            process: value.process,
-            thread: value.thread,
+            handle: identity.handle,
+            process: identity.process,
+            thread: identity.thread,
         };
         Query::windows(match kind {
             0 => win::windows(),
@@ -160,7 +168,7 @@ pub extern "C" fn window_management_windows_query(
     };
     #[cfg(not(windows))]
     let result = {
-        let _ = (kind, value, x, y);
+        let _ = (kind, identity, x, y);
         Query::failed(1, 0)
     };
     Box::into_raw(Box::new(result))
@@ -181,11 +189,12 @@ pub extern "C" fn window_management_windows_displays() -> *mut Query {
     let result = Query::failed(1, 0);
     Box::into_raw(Box::new(result))
 }
-/// # Safety
-/// Native identity is rechecked but handle reuse is not atomically prevented.
+/// Execute a command and return an owned result. Operations: 0 set frame, 1 restore,
+/// 2 minimize, 3 maximize, 4 post close request.
+/// Native identity is rechecked, but handle reuse is not atomically prevented.
 #[unsafe(no_mangle)]
 pub extern "C" fn window_management_windows_command(
-    value: Identity,
+    identity: Identity,
     operation: u32,
     frame: Rect,
 ) -> *mut Query {
@@ -193,9 +202,9 @@ pub extern "C" fn window_management_windows_command(
     let result = {
         use window_management_windows as win;
         let value = win::WindowIdentity {
-            handle: value.handle,
-            process: value.process,
-            thread: value.thread,
+            handle: identity.handle,
+            process: identity.process,
+            thread: identity.thread,
         };
         Query::windows(match operation {
             0 => win::set_frame(value, frame).map(|w| vec![w]),
@@ -213,16 +222,20 @@ pub extern "C" fn window_management_windows_command(
     };
     #[cfg(not(windows))]
     let result = {
-        let _ = (value, operation, frame);
+        let _ = (identity, operation, frame);
         Query::failed(1, 0)
     };
     Box::into_raw(Box::new(result))
 }
+/// Apply a shared JSON request and return an owned result. Kinds: 0 placement request,
+/// 1 move request. Nonzero fallback permits the first ordered display. Native identity
+/// is rechecked before setting a frame.
+///
 /// # Safety
 /// Nonempty input must be readable for length bytes. No storage is retained.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn window_management_windows_request(
-    value: Identity,
+    identity: Identity,
     kind: u32,
     data: *const u8,
     length: usize,
@@ -232,9 +245,9 @@ pub unsafe extern "C" fn window_management_windows_request(
     let result = {
         use window_management_windows as win;
         let value = win::WindowIdentity {
-            handle: value.handle,
-            process: value.process,
-            thread: value.thread,
+            handle: identity.handle,
+            process: identity.process,
+            thread: identity.thread,
         };
         if data.is_null() || length == 0 || length > isize::MAX as usize {
             Query::failed(2, 0)
@@ -255,7 +268,7 @@ pub unsafe extern "C" fn window_management_windows_request(
     };
     #[cfg(not(windows))]
     let result = {
-        let _ = (value, kind, data, length, fallback);
+        let _ = (identity, kind, data, length, fallback);
         Query::failed(1, 0)
     };
     Box::into_raw(Box::new(result))
