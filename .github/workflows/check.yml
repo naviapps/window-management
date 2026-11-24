@@ -14,16 +14,16 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: sdk-${{ github.ref }}-${{ inputs.platform || 'all' }}
+  group: sdk-${{ github.event_name == 'push' && github.run_id || github.ref }}-${{ inputs.platform || 'all' }}
   cancel-in-progress: true
 jobs:
   plan:
-    uses: naviapps/sdk-tooling/.github/workflows/plan-checks.yml@5b8ed6b1de70b0d7f0cf78519fd9fb1cbdf1f11a
+    uses: naviapps/sdk-tooling/.github/workflows/plan-checks.yml@54d09a55da0ffe938ebd13d708c53a2bd28d6be0
   swift:
     needs: plan
     if: ${{ needs.plan.outputs.documentation-only != 'true' && inputs.platform != 'windows' }}
     name: Swift
-    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@5b8ed6b1de70b0d7f0cf78519fd9fb1cbdf1f11a
+    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@54d09a55da0ffe938ebd13d708c53a2bd28d6be0
   windows:
     needs: plan
     if: ${{ needs.plan.outputs.documentation-only != 'true' && inputs.platform != 'macos' }}
