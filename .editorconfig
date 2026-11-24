@@ -26,6 +26,3 @@ dotnet_diagnostic.IDE0052.severity = warning
 dotnet_diagnostic.IDE0059.severity = warning
 dotnet_diagnostic.IDE0060.severity = warning
 dotnet_code_quality_unused_parameters = non_public
-
-[bindings/dotnet/src/NaviApps.WindowManagement/**.cs]
-dotnet_diagnostic.IDE0005.severity = warning
