@@ -79,8 +79,9 @@ headers, resources, symlinks and notices. Include
 `<CWindowManagement/window_management.h>` and link `-framework CWindowManagement`,
 with `-F` and a runtime search path pointing to the installed framework's parent.
 Keep the retained third-party notices with the framework. This client needs
-neither Rust nor an SDK source include path. The Windows DLL and import library
-have their own native acceptance path.
+neither Rust nor an SDK source include path. For Windows x64, see
+[the native build instructions](#owned-platform-acceptance) for the DLL, import library
+and matching C header.
 
 C query views borrow their owner. Bindings copy foreign strings and arrays before
 release. Buffers must remain readable/writable for declared sizes; null/count/alignment
@@ -211,7 +212,7 @@ Fetching prepares the Cargo cache for locked offline checks. Use
 | `test-consumer`            | Both Swift products installed with synthetic providers                                  |
 | `test-installed-consumers` | Independent Rust Git client and installed-framework C client                            |
 | `test-c` / `test-dotnet`   | Native C / managed boundary fixtures against the framework                              |
-| `check-header`             | Verify that the checked-in C header matches the Rust FFI                                |
+| `check-header`             | Compare the generated C header and module map with the bundled framework                |
 | `native` / `native-verify` | Rebuild / verify the universal macOS framework and receipt                              |
 
 `mise run lint` checks owned source; `mise run format` formats it. `DOTNET_BIN` selects
@@ -257,9 +258,10 @@ credentials, Windows DLLs or a framework rebuild.
 
 `Artifacts/CWindowManagement.xcframework` and `Artifacts/native-build.json` are retained
 consumer inputs. Run `mise exec -- make native` after captured production inputs
-change. It regenerates the C header and module map before rebuilding. Use
-`mise exec -- make native-verify` to verify the generated files and framework.
-Test-only Rust edits do not invalidate them.
+change. The build generates the C header and module map under `crates/ffi/` and
+bundles them in the XCFramework. Git ignores the local copies. To generate only
+these files, run `mise exec -- make generate-header`. Use `mise exec -- make native-verify`
+to verify the bundled declarations and framework receipt. Test-only Rust edits do not invalidate them.
 The [native build policy](native.toml) and its inputs are recorded in the receipt.
 The framework combines original notices in `Resources/ThirdPartyNotices.txt`; originals
 and Rust provenance remain in `ThirdParty/` and accompany selected NuGet runtimes.
@@ -304,8 +306,9 @@ whether WindowServer lists the transparent window and changes no permissions/set
 
 On an owned Windows 11 worker, use Python, Rust and MSVC matching the worker's
 architecture, the `x86_64-pc-windows-msvc` Rust standard library and the x64 .NET SDK
-pinned in `global.json`. Set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64
-builds x64 artifacts and runs the x64 fixtures through Windows emulation:
+pinned in `global.json`. Install the cbindgen version pinned in `mise.toml` and
+set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64 builds x64 artifacts
+and runs the x64 fixtures through Windows emulation:
 
 ```powershell
 mise run sdk-tooling -- python distribution/verify_windows_native.py --desktop
@@ -314,9 +317,10 @@ mise run sdk-tooling -- nuget-consumer .native-build/packages/NaviApps.WindowMan
 ```
 
 The Windows x64 gate checks PE architecture, exports, CRT linkage, Rust and C fixtures,
-managed contracts, and an installed NuGet client. `--desktop` uses the managed API
-to control and close a separate owned x64 Win32 window compiled from Rust and
-records the host and managed process architecture.
+managed contracts, and an installed NuGet client. Use the generated
+`crates/ffi/include/window_management.h` with the matching DLL and import library.
+The `--desktop` fixture uses the managed API to control and close a separate owned x64
+Win32 window compiled from Rust. It records the host and managed process architecture.
 `--build-only` prepares the x64 DLL and receipt without running the fixtures.
 
 The SDK Tooling Windows x64 distribution job runs the full DLL and NuGet

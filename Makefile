@@ -38,7 +38,7 @@ test-consumer:
 test-installed-consumers:
 	$(SDK_TOOLING) rust-c-consumers
 
-native: generate-header
+native:
 	$(SDK_TOOLING) xcframework
 
 native-verify: check-header

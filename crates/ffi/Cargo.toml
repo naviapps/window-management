@@ -7,6 +7,7 @@ publish = false
 rust-version.workspace = true
 
 [package.metadata.c-bindings]
+generated = true
 module = "CWindowManagement"
 
 [lib]

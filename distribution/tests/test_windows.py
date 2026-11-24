@@ -84,12 +84,15 @@ class WindowsToolsTests(unittest.TestCase):
                 environment = {}
                 backend.native_environment.return_value = environment, compiler, dotnet
                 native = Mock()
+                build_steps = Mock()
+                build_steps.attach_mock(backend.build_library, "build_library")
                 with (
                     patch.object(sys, "platform", "win32"),
                     patch.dict(os.environ, {"DOTNET_HOST_PATH": "host default"}, clear=True),
                     patch.object(build, "load", return_value=backend),
                     patch.object(build, "support_inputs", return_value={}),
                     patch.object(build, "ffi_product", return_value=native),
+                    patch.object(build, "prepare_generated", build_steps.prepare_generated),
                     patch.object(windows_delivery, "windows", backend),
                     patch.object(
                         windows_delivery.subprocess, "check_output", return_value="10.0.403\n"
@@ -101,8 +104,12 @@ class WindowsToolsTests(unittest.TestCase):
                 backend.native_environment.assert_called_once_with(
                     host, {}, target_architecture="x64"
                 )
-                backend.build_library.assert_called_once_with(
-                    native, environment, compiler, "x64", native_host=host
+                self.assertEqual(
+                    build_steps.mock_calls,
+                    [
+                        call.prepare_generated(root),
+                        call.build_library(native, environment, compiler, "x64", native_host=host),
+                    ],
                 )
                 self.assertEqual(environment["DOTNET_BIN"], dotnet)
                 self.assertEqual(
