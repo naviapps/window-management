@@ -1,0 +1,39 @@
+name: SDK checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to check
+        type: choice
+        default: all
+        options: [all, macos, windows]
+permissions:
+  contents: read
+concurrency:
+  group: sdk-${{ github.ref }}-${{ inputs.platform || 'all' }}
+  cancel-in-progress: true
+jobs:
+  plan:
+    uses: naviapps/sdk-tooling/.github/workflows/plan-checks.yml@5b8ed6b1de70b0d7f0cf78519fd9fb1cbdf1f11a
+  swift:
+    needs: plan
+    if: ${{ needs.plan.outputs.documentation-only != 'true' && inputs.platform != 'windows' }}
+    name: Swift
+    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@5b8ed6b1de70b0d7f0cf78519fd9fb1cbdf1f11a
+  windows:
+    needs: plan
+    if: ${{ needs.plan.outputs.documentation-only != 'true' && inputs.platform != 'macos' }}
+    name: Test Rust and .NET
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+      - uses: naviapps/sdk-tooling/.github/actions/test-rust-windows@main
+        with:
+          test-bindings: "true"
