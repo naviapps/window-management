@@ -1669,12 +1669,12 @@
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Headers": "036ae9446c4f0c59046671d1d96e2de4f606b340d8a5c1927b2d51bc293e0365",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Modules": "278b6b2d8f8418e2e4877a67a109b6e3865174e4fa7405870a643e95cbc2f783",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Resources": "c213ee8e9c523538d862da3e5716b64bf090f6a1be08914954ae33cfbda7dbb2",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/CWindowManagement": "ce2971645c5f69a3caf8f33ce029e10f61e445062bc2df9a0ba60f26ccc18e84",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/CWindowManagement": "262bf6ac42a457f76c9b0f31a8cb4a7afee8418c4b3006dd29daf28568600b1d",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Headers/window_management.h": "d772320a180f148cacf51f9406ccddffd495eb03e55014b69bc1c63ef3343894",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Modules/module.modulemap": "e9e64da17b6b1f007923b57fbcb89b87be4b9bbdc94aa98e25065914c3effe8f",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/Info.plist": "135546d1e47c03050007a8692507e8d2a0273fa0cdcfb4745f8f4c0e58b65dd0",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/ThirdPartyNotices.txt": "98fd0542cf941aa32f86dc85151efa203a082ec5c2b2e451f6697cef1a2f790f",
-    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/_CodeSignature/CodeResources": "878f1ad760a0be0d9f16b24765c9665619714d2ae08cc1bbfb2af92ee265641b",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/Resources/ThirdPartyNotices.txt": "12e71b8a8bed826cb20c9e1945817db223e4c289c5602e69d15141c59f7b9b2a",
+    "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/A/_CodeSignature/CodeResources": "1040f68c821218b7d4f9734062dc7c8723cf2d0a470fd39da8ade0d8d1110194",
     "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework/Versions/Current": "ee26006c07174064a7bed9b283a8b016d74a295e05c4e23a1846538d69b23c5f"
   },
   "productionSources": [
@@ -1696,7 +1696,7 @@
     "cargo.py": "4f468ebfd98d094b464bbb4ac354b65726a1b099f8cfd50c9c37a3fc495c8544",
     "cargo_build.py": "96a1a5b00a20fd64d8691eeba89839144e7e5bd8fd989e9cb0a4a80152f98590",
     "crates/rustc-dep-info/src/main.rs": "0a59fb162cc855001899ad9b83875fac0ed837e73caafd116453352c9b56e2cf",
-    "ffi.py": "d69e16a62490c95c7a2935e93ac6d557de2fbf6c66afde7aace3099a3f0ed03f",
+    "ffi.py": "ea75aea07673c1b54ac4cf5178876abef3e20063eb5774b5d181e5d9ebc681c9",
     "native_plan.py": "126791c1993dded2be0f46784a28528d40ed1218c46d1f1aadb2c026f047dcd3",
     "xcframework.py": "277c2e390f94f45614479e289deccea9c2c3e0af71d5c6ce5421872161671558"
   }
