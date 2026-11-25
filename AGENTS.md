@@ -8,4 +8,4 @@ Swift consumers install through Package.swift and tracked native frameworks. Reb
 
 Automatic macOS source checks include strict Swift tests against the tracked framework. Changed native or permission-dependent behavior still requires separate owned runtime acceptance.
 
-Use English documentation/comments. Keep public GitHub-hosted CI independent of private dependency credentials. Use the SDK Tooling revision in mise.toml and describe distribution checks in sdk-distribution.toml. Human QA/data and existing VM/security/sharing settings are protected. Read README.md and its linked Swift guides before changing a public contract.
+Use English documentation/comments. Keep public GitHub-hosted CI independent of private dependency credentials. Use the SDK Tooling revision in mise.toml and describe distribution checks in sdk-tooling.toml. Human QA/data and existing VM/security/sharing settings are protected. Read README.md and its linked Swift guides before changing a public contract.

@@ -34,7 +34,6 @@ def main(argv=None):
         nuget_config=root / "bindings/dotnet/NuGet.Config",
         input_files=[
             Path(__file__),
-            root / "native.toml",
             root / "mise.toml",
         ],
         runtimes=args.runtime,

@@ -1,0 +1,61 @@
+[[native.artifacts]]
+id = "sdk"
+symbol_prefix = "window_management_"
+minimum_macos = "26.0"
+
+[checks.swift]
+inputs = ["Package.swift", "Sources", "Tests", "Artifacts", "ThirdParty", "LICENSE"]
+executable = "WindowManagementConsumer"
+
+[checks.rust_c]
+git_url = "https://github.com/naviapps/window-management.git"
+rust_packages = ["window-management"]
+
+[checks.rust_c.c]
+framework = "Artifacts/CWindowManagement.xcframework/macos-arm64_x86_64/CWindowManagement.framework"
+header = "window_management.h"
+
+[checks.bindings]
+abi_fixture = "crates/ffi/tests/c/abi.c"
+dotnet_project = "bindings/dotnet/tests/NaviApps.WindowManagement.Tests/NaviApps.WindowManagement.Tests.csproj"
+windows_x64 = true
+
+[checks.windows_bindings]
+packages = ["window-management-ffi"]
+
+[checks.nuget]
+package_id = "NaviApps.WindowManagement"
+fixtures = [
+  "fixtures/consumers/dotnet/Program.cs",
+]
+windows_x64 = true
+
+[distribution.macos]
+commands = [
+  ["cargo", "fetch", "--locked"],
+  ["make", "check-distribution"],
+]
+
+[distribution.windows]
+commands = [
+  ["rustup", "install", "--no-self-update"],
+  [
+    "sdk-tooling",
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "distribution/tests",
+  ],
+  [
+    "sdk-tooling",
+    "windows",
+    "distribution/verify_windows.py",
+    "--skip-desktop",
+    "--native-only",
+  ],
+]
+
+[distribution.nuget]
+pack = "distribution/pack_nuget.py"

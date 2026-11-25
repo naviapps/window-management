@@ -183,7 +183,8 @@ or replacement-window fallback. macOS command details belong to the
 `crates/` owns Rust, Windows resources and the C ABI; `Sources/` / `Tests/` own Swift
 source and tests. Managed projects live in `bindings/dotnet/` and independent clients in
 `fixtures/consumers/`. The separate-process Windows desktop fixture lives in
-`fixtures/acceptance/windows/`. The [native build policy](native.toml) selects the framework in `Artifacts/`.
+`fixtures/acceptance/windows/`. The `[native]` section of [`sdk-tooling.toml`](sdk-tooling.toml)
+selects the framework in `Artifacts/`.
 Upstream notices are retained in `ThirdParty/`. Package and Windows acceptance drivers are in
 `distribution/`.
 
@@ -225,8 +226,8 @@ results, raw-byte and Codable projection, native ownership and the public entry 
 
 ### Distribution verification
 
-The [distribution plan](sdk-distribution.toml) selects this SDK's macOS and Windows
-x64 checks. From a clean, committed checkout on macOS, run the checks with the
+The `[distribution]` section of [`sdk-tooling.toml`](sdk-tooling.toml) selects this SDK's
+macOS and Windows x64 checks. From a clean, committed checkout on macOS, run the checks with the
 public SDK Tooling CLI pinned in [mise.toml](mise.toml):
 
 ```sh
@@ -263,7 +264,7 @@ change. The build generates the C header and module map under `crates/ffi/` and
 bundles them in the XCFramework. Git ignores the local copies. To generate only
 these files, run `mise exec -- make generate-header`. Use `mise exec -- make native-verify`
 to verify the bundled declarations and framework receipt. Test-only Rust edits do not invalidate them.
-The [native build policy](native.toml) and its inputs are recorded in the receipt.
+The receipt records the native build policy and its inputs.
 The framework combines original notices in `Resources/ThirdPartyNotices.txt`; originals
 and Rust provenance remain in `ThirdParty/` and accompany selected NuGet runtimes.
 
