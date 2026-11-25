@@ -17,23 +17,8 @@ concurrency:
   group: sdk-${{ github.event_name == 'push' && github.run_id || github.ref }}-${{ inputs.platform || 'all' }}
   cancel-in-progress: true
 jobs:
-  plan:
-    uses: naviapps/sdk-tooling/.github/workflows/plan-checks.yml@9ff679a53617d014c0c85345894dfe1bd54c3974
-  swift:
-    needs: plan
-    if: ${{ needs.plan.outputs.documentation-only != 'true' && inputs.platform != 'windows' }}
-    name: Swift
-    uses: naviapps/sdk-tooling/.github/workflows/check-swift.yml@9ff679a53617d014c0c85345894dfe1bd54c3974
-  windows:
-    needs: plan
-    if: ${{ needs.plan.outputs.documentation-only != 'true' && inputs.platform != 'macos' }}
-    name: Test Rust and .NET
-    runs-on: windows-2025
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - uses: naviapps/sdk-tooling/.github/actions/test-rust-windows@main
-        with:
-          test-bindings: "true"
+  check:
+    uses: naviapps/sdk-tooling/.github/workflows/check-sdk.yml@40c6bf76530e61fc427db4b4ec8b7f8cf969f562
+    with:
+      platform: ${{ inputs.platform || 'all' }}
+      windows: bindings
