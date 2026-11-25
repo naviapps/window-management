@@ -61,8 +61,9 @@ window-management = { git = "https://github.com/naviapps/window-management.git",
 
 The client uses its own `Cargo.lock` and the Rust toolchain for its target.
 `window-management-windows` is the separate Win32 adapter. The workspace
-declares Rust 1.85; the installed consumer gate uses the pinned Rust 1.99.1 and
-does not establish build or runtime support at the declared minimum.
+declares Rust 1.85. The installed consumer gate uses the toolchain in
+`rust-toolchain.toml` and does not establish build or runtime support at the
+declared minimum.
 
 ### C
 

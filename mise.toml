@@ -4,14 +4,14 @@ activate_aggressive = true
 idiomatic_version_file_enable_tools = ["rust", "dotnet"]
 
 [tools]
-python = "3.15.1"
-ruff = "0.17.3"
-dprint = "0.64.3"
+python = "3.15.2"
+ruff = "0.17.6"
+dprint = "0.65.0"
 jactionlint = "2.6.0"
 swiftlint = { version = "0.65.1", os = ["macos"] }
-uv = { version = "0.13.6", os = ["macos", "linux"] }
+uv = { version = "0.13.10", os = ["macos", "linux"] }
 "cargo:cbindgen" = "0.29.4"
-"github:bnjbvr/cargo-machete" = { version = "0.9.2", platforms.windows-arm64.asset_pattern = "*-x86_64-pc-windows-msvc.tar.gz" }
+"github:bnjbvr/cargo-machete" = { version = "0.10.1", platforms.windows-arm64.asset_pattern = "*-x86_64-pc-windows-msvc.tar.gz" }
 
 [tasks.lint]
 description = "Check owned source formatting and semantic lint before builds"
@@ -23,4 +23,4 @@ run = "mise run sdk-tooling -- quality format --dotnet"
 
 [tasks.sdk-tooling]
 description = "Run the pinned shared SDK checks"
-run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@cde0b15cf638c4915beeb7c8a8e66ed5f3878aa1 sdk-tooling"
+run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@9ff679a53617d014c0c85345894dfe1bd54c3974 sdk-tooling"
