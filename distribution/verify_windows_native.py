@@ -8,7 +8,8 @@ from pathlib import Path
 
 from sdk_tooling.adapters import load, support_inputs
 from sdk_tooling.c_headers import prepare_generated
-from sdk_tooling.native_plan import ffi_product
+from sdk_tooling.manifest import read_section
+from sdk_tooling.native_plan import ffi_product, sdk_relative_path
 from sdk_tooling.windows_delivery import X64Acceptance, locked_fetch_args
 
 from distribution.windows_target import RID, TARGET
@@ -58,12 +59,19 @@ def main(root=None, argv=None):
     library = destination / (native.library + ".dll")
     with load("artifacts").build_lock(root / ".native-build"):
         windows.verify_artifact(native, architecture="x64", environment=env)
-        command = load("binding_checks").command
-        run(command("c", "--library", library))
+        bindings = load("binding_checks")
+        fixture = read_section(root, "checks")["bindings"]["abi_fixture"]
+        bindings.check_c(
+            source=root / sdk_relative_path(root, fixture, "C ABI fixture"),
+            include_dirs=(native.ffi / "include",),
+            library=library,
+            work_parent=root / ".native-build",
+            argv=["--windows-architecture", "x64"],
+        )
         sources = [
             value for source in args.package_source for value in ("--package-source", source)
         ]
-        run(command("dotnet", "--native-root", destination, *sources))
+        run(bindings.command("dotnet", "--native-root", destination, *sources))
         if args.desktop:
             run_desktop(root, dotnet, env, library, args.package_source, run)
     if inputs != support_inputs(root):

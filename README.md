@@ -176,7 +176,7 @@ or an invalid point returns `NoMatchingWindowAtPoint`. These are values in
 Windows close requests post an ordinary close after identity validation. Applications
 may prompt, refuse or complete later; there is no process termination, keyboard shortcut
 or replacement-window fallback. macOS command details belong to the
-[native guide](https://github.com/naviapps/window-management/blob/main/docs/swift-macos.md).
+[native guide](docs/swift-macos.md).
 
 ## Repository layout
 
@@ -244,8 +244,8 @@ gh workflow run check-sdk-distribution.yml -R naviapps/sdk-tooling \
 
 ### Consumers, artifacts and packages
 
-The Swift fixture installs only the manifest, sources, required test directories,
-framework, notices and license. It tests geometry/filtering and `WindowPlacer` through
+The Swift fixture installs only the manifest, sources, framework, notices and license.
+It tests geometry/filtering and `WindowPlacer` through
 synthetic providers, including failure before frame access with no displays. It never
 queries or controls desktop windows; the installed tree contains no Rust or SDK tooling.
 
@@ -268,9 +268,9 @@ The receipt records the native build policy and its inputs.
 The framework combines original notices in `Resources/ThirdPartyNotices.txt`; originals
 and Rust provenance remain in `ThirdParty/` and accompany selected NuGet runtimes.
 
-Build native assets on their own OS before packing. Windows DLLs and receipts belong
-in `.native-build/windows/win-x64`; the macOS framework belongs in `Artifacts`. Pack
-and test a local package on macOS:
+Build Windows assets on Windows and retain the DLL and receipt in
+`.native-build/windows/win-x64`. On macOS, pack and test the tracked framework
+directly from a clean checkout after [setup](#setup-and-checks):
 
 ```sh
 mise run sdk-tooling -- python distribution/pack_nuget.py --runtime osx-arm64 --runtime osx-x64
@@ -309,8 +309,8 @@ whether WindowServer lists the transparent window and changes no permissions/set
 On an owned Windows 11 worker, use Python, Rust and MSVC matching the worker's
 architecture, the `x86_64-pc-windows-msvc` Rust standard library and the x64 .NET SDK
 pinned in `global.json`. Install the uv and cbindgen versions pinned in `mise.toml`
-and set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64 builds x64 artifacts
-and runs the x64 fixtures through Windows emulation:
+and set `DOTNET_BIN` to the absolute x64 executable. On ARM64, follow the
+[Windows on Arm setup](https://github.com/naviapps/sdk-tooling#windows-on-arm).
 
 ```powershell
 mise run sdk-tooling -- python distribution/verify_windows_native.py --desktop
@@ -329,7 +329,7 @@ The Windows x64 distribution job validates the DLL for the combined NuGet
 package. The Windows consumer job installs and tests that package after it is
 built on macOS. Run the `--desktop` fixture on an owned Windows desktop.
 
-The [selection benchmark](https://github.com/naviapps/window-management/blob/main/crates/core/examples/selection_benchmark.rs) runs with
+The [selection benchmark](crates/core/examples/selection_benchmark.rs) runs with
 `mise exec -- cargo run -p window-management --example selection_benchmark --release --locked --offline`.
 It measures Rust selection across ten displays/ten spanning positions, excluding FFI
 and OS calls. Record source, machine, toolchain and timings per result.

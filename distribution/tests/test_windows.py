@@ -23,6 +23,7 @@ ci = importlib.import_module("distribution.verify_windows")
 class WindowsToolsTests(unittest.TestCase):
     def test_pack_rejects_arm64_before_loading_native_artifacts(self):
         with (
+            patch.object(pack, "prepare_generated") as prepare,
             patch.object(pack, "ffi_product") as product,
             patch.object(pack, "xcframework") as framework,
             patch.object(sys, "stderr"),
@@ -30,6 +31,7 @@ class WindowsToolsTests(unittest.TestCase):
         ):
             pack.main(["--runtime", "win-arm64"])
         self.assertEqual(rejected.exception.code, 2)
+        prepare.assert_not_called()
         product.assert_not_called()
         framework.assert_not_called()
 
@@ -42,10 +44,12 @@ class WindowsToolsTests(unittest.TestCase):
             root = Path(pack.__file__).resolve().parents[1]
             retained = {"ThirdParty/dependency/NOTICE": root / "ThirdParty/dependency/NOTICE"}
             nuget = Mock(retained_notice_files=Mock(return_value=retained))
+            preparation = Mock()
             with (
                 self.subTest(runtimes=runtimes),
                 patch.object(pack, "ffi_product") as product,
-                patch.object(pack, "xcframework") as framework,
+                patch.object(pack, "prepare_generated", preparation.generate),
+                patch.object(pack, "xcframework", preparation.framework) as framework,
                 patch.object(pack, "load", return_value=nuget),
             ):
                 command = [argument for rid in runtimes for argument in ("--runtime", rid)]
@@ -55,6 +59,12 @@ class WindowsToolsTests(unittest.TestCase):
                 )
                 selected.assert_called_once_with(root)
                 unused.assert_not_called()
+                self.assertEqual(
+                    preparation.mock_calls,
+                    [call.generate(root, verify=True), call.framework(root)]
+                    if requires_framework
+                    else [],
+                )
                 nuget.retained_notice_files.assert_called_once_with(
                     root / "ThirdParty", "ThirdParty"
                 )
@@ -116,6 +126,47 @@ class WindowsToolsTests(unittest.TestCase):
                     run.call_args.args[0],
                     list(windows_delivery.locked_fetch_args()),
                 )
+
+    def test_windows_acceptance_uses_prepared_headers_after_verifying_the_build(self):
+        root = Path(build.__file__).resolve().parents[1]
+        work = root / ".native-build"
+        destination = work / "windows" / "win-x64"
+        native = Mock(library="window_management_ffi", ffi=root / "crates/ffi")
+        acceptance = Mock(host="arm64", env={}, dotnet=str(root / "dotnet.exe"))
+        steps = Mock()
+        backend = Mock(verify_artifact=steps.verify)
+        backend.build_library.return_value = destination
+        bindings = Mock(check_c=steps.check_c, command=Mock(return_value=("managed-fixture",)))
+        tooling = {
+            "artifacts": Mock(build_lock=Mock(return_value=nullcontext())),
+            "binding_checks": bindings,
+            "windows": backend,
+        }
+        with (
+            patch.object(sys, "platform", "win32"),
+            patch.object(build, "support_inputs", return_value={}),
+            patch.object(build, "ffi_product", return_value=native),
+            patch.object(build, "X64Acceptance", return_value=acceptance),
+            patch.object(build, "prepare_generated", steps.generate),
+            patch.object(build, "load", side_effect=tooling.__getitem__),
+            patch("builtins.print"),
+        ):
+            build.main(root=root, argv=[])
+        self.assertEqual(
+            steps.mock_calls,
+            [
+                call.generate(root),
+                call.verify(native, architecture="x64", environment=acceptance.env),
+                call.check_c(
+                    source=native.ffi / "tests/c/abi.c",
+                    include_dirs=(native.ffi / "include",),
+                    library=destination / "window_management_ffi.dll",
+                    work_parent=work,
+                    argv=["--windows-architecture", "x64"],
+                ),
+            ],
+        )
+        bindings.command.assert_called_once_with("dotnet", "--native-root", destination)
 
     def test_evidence_contains_native_outputs_and_only_accepted_packages(self):
         for changed, desktop, native_only in (

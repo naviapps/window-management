@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 
 from sdk_tooling.adapters import load
+from sdk_tooling.c_headers import prepare_generated
 from sdk_tooling.native_plan import ffi_product
 from sdk_tooling.xcframework import xcframework
 
@@ -22,7 +23,11 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
-    native = ffi_product(root) if set(args.runtime) == {RID} else xcframework(root)
+    if set(args.runtime) == {RID}:
+        native = ffi_product(root)
+    else:
+        prepare_generated(root, verify=True)
+        native = xcframework(root)
     nuget = load("nuget")
     selected = {"LICENSE": root / "LICENSE", "README.md": root / "bindings/dotnet/README.md"}
     selected.update(nuget.retained_notice_files(root / "ThirdParty", "ThirdParty"))
