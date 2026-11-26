@@ -1,2 +1,2 @@
-parent_config: https://raw.githubusercontent.com/naviapps/sdk-tooling/main/crates/template-sync/templates/.swiftlint.yml
+parent_config: https://raw.githubusercontent.com/naviapps/sdk-tooling/main/.swiftlint.yml
 strict: true
