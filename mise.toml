@@ -15,4 +15,4 @@ uv = "0.13.10"
 
 [tasks.sdk-tooling]
 description = "Run the pinned shared SDK checks"
-run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@21410b8dd9b7771b9cc234017837c781ba9d4c4b sdk-tooling"
+run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@cf8488951a12565b80edb24dda5300021563d954 sdk-tooling"

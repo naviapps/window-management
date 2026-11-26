@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   check:
-    uses: naviapps/sdk-tooling/.github/workflows/check-sdk.yml@21410b8dd9b7771b9cc234017837c781ba9d4c4b
+    uses: naviapps/sdk-tooling/.github/workflows/check-sdk.yml@cf8488951a12565b80edb24dda5300021563d954
     with:
       platform: ${{ inputs.platform || 'all' }}
       windows: bindings
