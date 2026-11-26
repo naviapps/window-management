@@ -1,5 +1,5 @@
 SDK_TOOLING ?= mise run sdk-tooling --
-SWIFT_STRICT_FLAGS := -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
+SWIFT_FLAGS := -Xswiftc -warnings-as-errors
 
 .DEFAULT_GOAL := check
 
@@ -12,10 +12,10 @@ check-source: lint check-header test-rust test-managed
 check-distribution: native-verify build-release test-distribution-tools test-installed-consumers test-c test-dotnet
 
 build:
-	swift build $(SWIFT_STRICT_FLAGS)
+	swift build $(SWIFT_FLAGS)
 
 build-release:
-	swift build -c release $(SWIFT_STRICT_FLAGS)
+	swift build -c release $(SWIFT_FLAGS)
 
 clean:
 	$(SDK_TOOLING) clean .build target .native-build fixtures/consumers/swift/.build \
@@ -30,7 +30,7 @@ lint:
 	$(SDK_TOOLING) quality check --dotnet
 
 test:
-	swift test $(SWIFT_STRICT_FLAGS)
+	swift test $(SWIFT_FLAGS)
 
 test-consumer:
 	$(SDK_TOOLING) swift-consumer

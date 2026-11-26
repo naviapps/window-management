@@ -325,8 +325,9 @@ The `--desktop` fixture uses the managed API to control and close a separate own
 Win32 window compiled from Rust. It records the host and managed process architecture.
 `--build-only` prepares the x64 DLL and receipt without running the fixtures.
 
-The SDK Tooling Windows x64 distribution job runs the full DLL and NuGet
-package checks. Run the `--desktop` fixture on an owned Windows desktop.
+The Windows x64 distribution job validates the DLL for the combined NuGet
+package. The Windows consumer job installs and tests that package after it is
+built on macOS. Run the `--desktop` fixture on an owned Windows desktop.
 
 The [selection benchmark](https://github.com/naviapps/window-management/blob/main/crates/core/examples/selection_benchmark.rs) runs with
 `mise exec -- cargo run -p window-management --example selection_benchmark --release --locked --offline`.
