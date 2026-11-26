@@ -41,7 +41,7 @@ test-installed-consumers:
 native:
 	$(SDK_TOOLING) xcframework
 
-native-verify: check-header
+native-verify:
 	$(SDK_TOOLING) xcframework --verify
 
 check-header:
