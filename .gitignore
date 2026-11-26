@@ -1,3 +1,4 @@
+/.swiftlint/RemoteConfigCache/
 .build/
 .swiftpm/
 .DS_Store
