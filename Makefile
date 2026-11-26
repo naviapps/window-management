@@ -24,10 +24,10 @@ clean:
 	  bindings/dotnet/tests/NaviApps.WindowManagement.Tests/bin bindings/dotnet/tests/NaviApps.WindowManagement.Tests/obj
 
 format:
-	mise run format
+	$(SDK_TOOLING) quality format --dotnet
 
 lint:
-	mise run lint
+	$(SDK_TOOLING) quality check --dotnet
 
 test:
 	swift test $(SWIFT_STRICT_FLAGS)

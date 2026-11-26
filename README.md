@@ -217,8 +217,8 @@ Fetching prepares the Cargo cache for locked offline checks. Use
 | `check-header`             | Compare the generated C header and module map with the bundled framework                |
 | `native` / `native-verify` | Rebuild / verify the universal macOS framework and receipt                              |
 
-`mise run lint` checks owned source; `mise run format` formats it. `DOTNET_BIN` selects
-an existing .NET executable. Native acceptance is separate from compilation and tests.
+Use `mise exec -- make lint` to check owned source and `mise exec -- make format`
+to format it. `DOTNET_BIN` selects an existing .NET executable for binding checks.
 The Rust integration suite covers geometry, display selection and the JSON contracts
 for placement and movement requests.
 Language and installed-consumer fixtures also check coordinate marshalling, typed
@@ -308,8 +308,8 @@ whether WindowServer lists the transparent window and changes no permissions/set
 
 On an owned Windows 11 worker, use Python, Rust and MSVC matching the worker's
 architecture, the `x86_64-pc-windows-msvc` Rust standard library and the x64 .NET SDK
-pinned in `global.json`. Install the cbindgen version pinned in `mise.toml` and
-set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64 builds x64 artifacts
+pinned in `global.json`. Install the uv and cbindgen versions pinned in `mise.toml`
+and set `DOTNET_BIN` to the absolute x64 executable. Windows ARM64 builds x64 artifacts
 and runs the x64 fixtures through Windows emulation:
 
 ```powershell

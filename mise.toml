@@ -9,18 +9,10 @@ ruff = "0.17.6"
 dprint = "0.65.0"
 jactionlint = "2.6.0"
 swiftlint = { version = "0.65.1", os = ["macos"] }
-uv = { version = "0.13.10", os = ["macos", "linux"] }
+uv = "0.13.10"
 "cargo:cbindgen" = "0.29.4"
 "github:bnjbvr/cargo-machete" = { version = "0.10.1", platforms.windows-arm64.asset_pattern = "*-x86_64-pc-windows-msvc.tar.gz" }
 
-[tasks.lint]
-description = "Check owned source formatting and semantic lint before builds"
-run = "mise run sdk-tooling -- quality check --dotnet"
-
-[tasks.format]
-description = "Format owned source without changing vendor or artifact bytes"
-run = "mise run sdk-tooling -- quality format --dotnet"
-
 [tasks.sdk-tooling]
 description = "Run the pinned shared SDK checks"
-run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@6a2a3565996c5711017f17dae15cbc9775dd6313 sdk-tooling"
+run = "uvx --from git+https://github.com/naviapps/sdk-tooling.git@21410b8dd9b7771b9cc234017837c781ba9d4c4b sdk-tooling"
